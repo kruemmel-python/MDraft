@@ -1,4 +1,5 @@
 # MDraft
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/d41986bb-ec08-4a8a-a06d-22fef90c6fcf" />
 
 **Native Markdown Workspace Editor**  
 **Developer:** Ralf Krümmel
