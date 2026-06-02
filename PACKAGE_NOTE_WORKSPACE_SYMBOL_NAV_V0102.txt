@@ -1,0 +1,17 @@
+MDraft v0.10.2 - Workspace Symbol Navigation
+
+Neu:
+- workspace_symbol_nav.hpp/cpp
+- find_workspace_symbols(...)
+- format_symbol_results(...)
+- Projekt -> Symbol-Navigation... (Ctrl+Shift+O)
+
+Verhalten:
+- Wenn Text markiert ist oder Cursor auf einem Wort steht, wird dieses als Symbol-Query genutzt.
+- Bei Treffern wird der erste Treffer geöffnet und der Cursor auf die Heading-Byteposition gesetzt.
+- Ohne Query zeigt MDraft eine Symbolübersicht des Workspace.
+- Symbolsuche nutzt WorkspaceIndex.symbols; es wird kein zweiter Parser in der UI gebaut.
+
+Validierung:
+- make clean
+- make test

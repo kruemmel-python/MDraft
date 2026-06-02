@@ -1,0 +1,21 @@
+MDraft v0.10.4 - Preview Locking
+
+Preview-Locking ist ein eigener UI-/RenderIR-Zustand.
+
+Neu:
+- Ansicht -> Preview sperren
+- Shortcut: Ctrl+Shift+P
+- Lock aktiviert bei Bedarf automatisch die Preview.
+- Beim Lock wird ein Markdown-Snapshot des aktuellen Editors eingefroren.
+- Preview-Scroll, Theme und DisplayList bleiben unabhängig vom Editor.
+- Danach können andere Dateien geöffnet oder der aktuelle Buffer bearbeitet werden, ohne dass die Preview wechselt.
+- Unlock schaltet zurück auf Live-Preview des aktuellen Editor-Buffers.
+
+Datenfluss:
+Live:
+  EditorRuntime.buffer -> markdown_to_display_list -> GDI Preview
+
+Locked:
+  locked_preview_markdown -> markdown_to_display_list -> GDI Preview
+
+Export bleibt unverändert über RenderIR/SVG/HTML.

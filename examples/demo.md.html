@@ -1,0 +1,627 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MDraft Export</title>
+<style>
+:root{color-scheme:light;--fg:#24292f;--muted:#57606a;--border:#d0d7de;--bg:#ffffff;--soft:#f6f8fa;--accent:#0969da;}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;}
+.markdown-body{box-sizing:border-box;max-width:980px;margin:32px auto;padding:0 32px;}
+h1,h2,h3,h4,h5,h6{margin:24px 0 16px;font-weight:600;line-height:1.25;}
+h1{font-size:2em;border-bottom:1px solid var(--border);padding-bottom:.3em;}h2{font-size:1.5em;border-bottom:1px solid var(--border);padding-bottom:.3em;}h3{font-size:1.25em;}
+p{margin:0 0 16px;}a{color:var(--accent);}blockquote{margin:0 0 16px;padding:0 1em;color:var(--muted);border-left:.25em solid var(--border);}
+ul,ol{margin-top:0;margin-bottom:16px;padding-left:2em;}li{margin:.25em 0;}.task-list-item{list-style-type:none;}input[type=checkbox]{margin:0 .45em .2em -1.6em;vertical-align:middle;}
+code{font-family:ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",Menlo,monospace;font-size:85%;background:rgba(175,184,193,.2);border-radius:6px;padding:.2em .4em;}
+pre{margin:0 0 16px;padding:16px;overflow:auto;background:var(--soft);border-radius:6px;}pre code{padding:0;background:transparent;font-size:100%;}
+table{border-spacing:0;border-collapse:collapse;margin:0 0 16px;width:auto;}th,td{padding:6px 13px;border:1px solid var(--border);}tr:nth-child(2n){background:var(--soft);}hr{height:.25em;padding:0;margin:24px 0;background:var(--border);border:0;}
+.math{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;color:#8250df;background:#f6f8fa;border-radius:6px;padding:.1em .3em;}.math-block{display:block;margin:0 0 16px;padding:16px;background:#f6f8fa;border-radius:6px;color:#8250df;}
+</style>
+</head>
+<body>
+<main class="markdown-body">
+<h1>CodeDumper</h1>
+<p><strong>Enterprise-grade local code dump generator for LLM-assisted code review, audits, architecture analysis, and secure repository handoff.</strong></p>
+<p>CodeDumper converts project ZIP archives into structured, LLM-ready Markdown, XML, or JSON dumps. It is designed for developers, security teams, consultants, and engineering organizations that need precise control over what code is shared with humans or large language models.</p>
+<p>The application runs locally in the browser or as a hardened Electron desktop app. No LLM call is made during dump generation. Token counts and costs are offline estimates only.</p>
+<hr>
+<h2>Why CodeDumper exists</h2>
+<p>Large language models are useful for code review, migration planning, refactoring, security analysis, and architecture understanding. However, sending an entire repository directly to an LLM is usually inefficient and risky.</p>
+<p>Typical problems include:</p>
+<ul>
+<li>oversized prompts that exceed context windows</li>
+<li>accidental inclusion of <code>node_modules</code>, build output, lockfiles, reports, generated assets, or datasets</li>
+<li>leakage of <code>.env</code> files, API keys, tokens, SSH keys, or cloud credentials</li>
+<li>prompt-injection content hidden in comments, documentation, or third-party code</li>
+<li>poor file ordering that makes the repository harder for an LLM to understand</li>
+<li>browser freezes while processing large ZIP files</li>
+<li>unsafe ZIP handling, including path traversal and decompression-bomb risks</li>
+</ul>
+<p>CodeDumper solves these problems by producing curated, filtered, token-aware, security-scanned code dumps.</p>
+<hr>
+<h2>Core capabilities</h2>
+<h3>LLM Code Review Mode</h3>
+<p>The default enterprise workflow is <strong>LLM Code Review Mode</strong>. It is language-agnostic and optimized for repositories of many technology stacks, not only React or JavaScript.</p>
+<p>It prioritizes:</p>
+<ul>
+<li>source code</li>
+<li>tests</li>
+<li>manifests</li>
+<li>runtime and build configuration</li>
+<li>architecture documentation</li>
+<li>security boundaries</li>
+<li>framework entry points</li>
+</ul>
+<p>It automatically removes or deprioritizes:</p>
+<ul>
+<li>dependency directories</li>
+<li>lockfiles</li>
+<li>build artifacts</li>
+<li>release packages</li>
+<li>reports</li>
+<li>generated data</li>
+<li>vendored code</li>
+<li>minified bundles</li>
+<li>sourcemaps</li>
+<li>logs</li>
+<li>binaries</li>
+<li>local secret files</li>
+</ul>
+<p>Supported ecosystems include, among others:</p>
+<ul>
+<li>JavaScript / TypeScript / React / Vue / Svelte / Astro / Node.js</li>
+<li>Python / FastAPI / Django / Flask / Streamlit</li>
+<li>Rust</li>
+<li>Go</li>
+<li>Java / Kotlin / Scala</li>
+<li>.NET / C#</li>
+<li>C / C++</li>
+<li>Swift</li>
+<li>PHP</li>
+<li>Ruby</li>
+<li>Dart</li>
+<li>Elixir / Erlang</li>
+<li>Clojure</li>
+<li>Haskell / OCaml</li>
+</ul>
+<hr>
+<h2>Feature overview</h2>
+<h3>Local ZIP inspection</h3>
+<p>CodeDumper inspects uploaded ZIP archives locally. It reads the archive structure, builds a file tree, applies safety limits, and lets the user select or exclude files before generating a dump.</p>
+<h3>Interactive file tree</h3>
+<p>A visual tree selector provides fine-grained control over included and excluded files. Directory selections cascade to children, allowing fast cleanup of large repositories.</p>
+<h3>Native ignore-file support</h3>
+<p>CodeDumper automatically detects and applies ignore rules from:</p>
+<ul>
+<li><code>.gitignore</code></li>
+<li><code>.dockerignore</code></li>
+</ul>
+<p>Negated ignore rules using <code>!pattern</code> are supported.</p>
+<h3>Smart stack detection</h3>
+<p>The scanner detects common project types from repository files and applies appropriate filtering logic. Examples:</p>
+<ul>
+<li><code>package.json</code> + Vite config → Node / Vite / frontend project</li>
+<li><code>pyproject.toml</code> or <code>requirements.txt</code> → Python project</li>
+<li><code>Cargo.toml</code> → Rust crate</li>
+<li><code>pom.xml</code> → Java / Maven project</li>
+<li><code>.csproj</code> or <code>.sln</code> → .NET project</li>
+</ul>
+<h3>Repository map generation</h3>
+<p>Generated dumps include a repository map at the top. This gives humans and LLMs an immediate overview of the included project structure before the file contents begin.</p>
+<h3>Local LLM Panel for LM Studio, Ollama and OpenAI-compatible local servers</h3>
+<p>The web UI includes a visible <strong>Local LLM Panel</strong> in the output area after a dump has been generated.</p>
+<p>Typical LM Studio workflow:</p>
+<ol>
+<li>Start LM Studio.</li>
+<li>Load and start a local model.</li>
+<li>Enable the local server in LM Studio.</li>
+<li>In CodeDumper, open the <strong>Local LLM Panel</strong>.</li>
+<li>Select <strong>OpenAI-compatible / LM Studio</strong>.</li>
+<li>Set the API endpoint to:</li>
+</ol>
+<pre><code class="language-text">http://localhost:1234/v1/chat/completions
+</code></pre>
+<ol>
+<li>Click <strong>Load models</strong> or enter the running model name manually.</li>
+<li>Review or customize the system prompt and review prompt.</li>
+<li>Click <strong>Send dump to Local LLM</strong>.</li>
+</ol>
+<p>For Ollama, use one of these endpoints:</p>
+<pre><code class="language-text">http://localhost:11434/api/chat
+http://localhost:11434/api/generate
+</code></pre>
+<p>The panel supports streaming responses and keeps the workflow local as long as the configured endpoint points to <code>localhost</code>, <code>127.0.0.1</code>, or another trusted internal server.</p>
+<h3>Token counting and cost estimation</h3>
+<p>CodeDumper estimates token usage and optional API cost before export.</p>
+<p>The UI explicitly states that no LLM/API call was made. Token and cost values are offline estimates intended for planning context-window and API-budget usage.</p>
+<h3>Multiple export formats</h3>
+<p>Supported output formats:</p>
+<ul>
+<li>Markdown</li>
+<li>XML</li>
+<li>JSON</li>
+</ul>
+<p>Markdown is suitable for general LLM workflows. XML and JSON are useful for structured prompting pipelines and automated processing.</p>
+<h3>Chunked export</h3>
+<p>Large repositories can be split into multiple output parts using a configurable token limit per file. This helps fit dumps into smaller context windows.</p>
+<h3>Semantic chunking</h3>
+<p>Instead of splitting files purely linearly, CodeDumper can group related files together. It prefers keeping files from the same directory, matching base names, and test/spec companions in the same chunk where possible.</p>
+<p>Example:</p>
+<pre><code class="language-text">Button.tsx
+Button.test.tsx
+Button.css
+</code></pre>
+<p>are more likely to stay together in the same export part.</p>
+<h3>Diff / Review Focus Mode</h3>
+<p>For pull-request-style workflows, CodeDumper can focus the dump on changed files and nearby companions.</p>
+<p>Users may provide:</p>
+<ul>
+<li>a comma-separated list of changed paths</li>
+<li>newline-separated changed paths</li>
+<li>unified diff headers</li>
+<li>uploaded <code>.diff</code> or <code>.patch</code> files</li>
+</ul>
+<p>The dump is then narrowed to the most relevant review files plus related tests or companions.</p>
+<h3>Code condensation</h3>
+<p>Optional code condensation reduces token footprint by removing low-value whitespace and comments. This is useful when repository size is more important than preserving every comment.</p>
+<p>Because comments can contain architectural or security context, this feature is optional.</p>
+<h3>Syntax-aware condensation and skeleton mode</h3>
+<p>CodeDumper includes a safer condensation path that avoids destructive regex-based comment stripping for supported workflows. It can preserve code structure while reducing prompt size.</p>
+<p>The optional skeleton mode extracts compact structural context such as:</p>
+<ul>
+<li>classes</li>
+<li>functions</li>
+<li>exported symbols</li>
+<li>interfaces and types</li>
+<li>route or module boundaries where detectable</li>
+</ul>
+<p>This is useful when a model needs architectural context without every implementation detail.</p>
+<h3>Token and file explorer</h3>
+<p>The output view includes a token/file explorer that helps identify which folders or files dominate the generated context.</p>
+<p>This makes it easier to remove accidental high-token areas such as:</p>
+<ul>
+<li>fixtures</li>
+<li>generated assets</li>
+<li>large JSON files</li>
+<li>reports</li>
+<li>vendored code</li>
+<li>test snapshots</li>
+</ul>
+<p>Large token contributors can be excluded directly from the explorer workflow.</p>
+<h3>Virtualized preview</h3>
+<p>Large generated dumps are previewed with a virtualized read-only output view to avoid UI freezes caused by very large textareas.</p>
+<h3>Web Worker processing</h3>
+<p>ZIP processing, decoding, filtering, scanning, token counting, and dump assembly run inside a Web Worker. The React UI remains responsive and the job can be cancelled.</p>
+<h3>Push to Local LLM</h3>
+<p>CodeDumper can optionally send the generated dump to a local LLM-compatible endpoint such as Ollama or LM Studio.</p>
+<p>This keeps the workflow local-first while removing the need to copy very large Markdown blocks manually.</p>
+<p>Typical local endpoints include:</p>
+<pre><code class="language-text">http://localhost:11434
+http://127.0.0.1:1234
+</code></pre>
+<p>This feature is explicitly intended for local/private model workflows. It is separate from the default dump generation flow, which still performs no LLM/API call.</p>
+<h3>LM Studio browser compatibility</h3>
+<p>When the Web UI talks to LM Studio from <code>http://localhost:3000</code>, the browser may perform a CORS preflight for JSON <code>POST</code> requests. PowerShell or curl can succeed while the browser fails because they do not enforce CORS.</p>
+<p>CodeDumper therefore tries two transports for OpenAI-compatible LM Studio endpoints:</p>
+<ol>
+<li>standard <code>application/json</code> streaming request</li>
+<li>no-preflight <code>text/plain;charset=UTF-8</code> JSON request for LM Studio/browser compatibility</li>
+</ol>
+<p>Use the LM Studio base URL, for example:</p>
+<pre><code class="language-text">http://192.168.178.62:1234
+</code></pre>
+<p>CodeDumper resolves it internally to:</p>
+<pre><code class="language-text">http://192.168.178.62:1234/v1/chat/completions
+</code></pre>
+<p>Keep <strong>CORS aktivieren</strong> and <strong>Im lokalen Netzwerk bereitstellen</strong> enabled in LM Studio, then restart the local server.</p>
+<h3>Custom enterprise rules</h3>
+<p>Organizations can define custom security and prompt-injection rules as JSON. This allows teams to detect internal credential formats, proprietary token prefixes, or organization-specific LLM manipulation patterns.</p>
+<p>Example rule use cases:</p>
+<ul>
+<li><code>CORP_API_TKN_*</code></li>
+<li>internal bearer-token formats</li>
+<li>customer-specific environment variable names</li>
+<li>prohibited prompt-injection phrases</li>
+<li>compliance-specific redaction markers</li>
+</ul>
+<hr>
+<h2>Security features</h2>
+<p>CodeDumper is built for workflows where the output may later be shared with an LLM, reviewer, vendor, or customer. Security checks are therefore part of the core pipeline.</p>
+<h3>No API key leakage</h3>
+<p>The frontend does not embed server-side API keys. There is no static injection of environment secrets into the browser bundle.</p>
+<h3>No LLM call during generation</h3>
+<p>CodeDumper does not send project contents to OpenAI, Anthropic, Google, or any other model provider during dump creation. All processing is local.</p>
+<h3>Secret and credential scanning</h3>
+<p>CodeDumper scans decoded text for common sensitive values and redacts them before export.</p>
+<p>Detection includes:</p>
+<ul>
+<li>AWS access keys</li>
+<li>OpenAI-style keys</li>
+<li>GitHub tokens</li>
+<li>Google API keys</li>
+<li>private key blocks</li>
+<li>bearer tokens</li>
+<li>generic secret assignments</li>
+<li>high-entropy token-like strings</li>
+</ul>
+<p>Redactions are reported in the UI warning panel.</p>
+<h3>Shannon-entropy detection</h3>
+<p>In addition to fixed regex rules, CodeDumper can flag high-entropy Base64-, hex-, and token-like strings. This helps catch custom credentials and organization-specific secrets that do not match standard patterns.</p>
+<h3>Prompt-injection detection</h3>
+<p>CodeDumper scans files for common indirect prompt-injection phrases, such as attempts to override system instructions or manipulate downstream LLM behavior.</p>
+<p>Possible actions:</p>
+<ul>
+<li>warn</li>
+<li>redact</li>
+<li>skip affected file</li>
+</ul>
+<p>This is useful when analyzing third-party repositories or untrusted ZIP archives.</p>
+<h3>Zip Slip protection</h3>
+<p>Archive paths are normalized and sanitized before they are displayed or exported. Absolute paths, traversal segments, and unsafe path forms are removed or rejected.</p>
+<h3>ZIP bomb and decompression protection</h3>
+<p>CodeDumper applies layered protections:</p>
+<ul>
+<li>archive-level size limits</li>
+<li>per-file size limits</li>
+<li>file-count limits</li>
+<li>path-length limits</li>
+<li>compression-ratio checks</li>
+<li>guarded extraction</li>
+<li>running byte counters</li>
+<li>Worker watchdog termination</li>
+</ul>
+<p>Selected extraction paths use guarded streaming via <code>fflate</code> to reduce memory-exhaustion risk compared with buffering entire files blindly.</p>
+<h3>Glob ReDoS protection</h3>
+<p>User-provided include and exclude patterns are validated and bounded to reduce regular-expression denial-of-service risks caused by pathological glob patterns.</p>
+<h3>Hardened Electron configuration</h3>
+<p>The Electron build is configured with a hardened browser environment:</p>
+<ul>
+<li><code>nodeIntegration: false</code></li>
+<li><code>contextIsolation: true</code></li>
+<li><code>sandbox: true</code></li>
+<li><code>webSecurity: true</code></li>
+<li>denied permission requests</li>
+<li>navigation restrictions</li>
+<li>external window restrictions</li>
+<li>Content Security Policy headers</li>
+</ul>
+<h3>ReDoS hardening</h3>
+<p>CodeDumper validates custom glob and regex-like rule inputs, applies scan limits, and avoids unbounded high-risk text scans where possible. Long lines and minified files are constrained before sensitive pattern matching is performed.</p>
+<h3>Encoding and obfuscation hardening</h3>
+<p>Before prompt-injection and secret checks, text can be normalized using Unicode NFKC. This reduces bypasses based on unusual Unicode forms.</p>
+<p>The scanner also performs heuristic checks for suspicious Base64-encoded strings and scans decoded candidates for secrets or prompt-injection phrases.</p>
+<h3>Symlink and nested-archive protection</h3>
+<p>ZIP symlink entries are dropped to avoid unsafe path semantics in browser, desktop, and CLI workflows.</p>
+<p>Nested ZIP-like files are detected through magic bytes and treated as non-recursive archive payloads. CodeDumper does not recursively unpack archive-in-archive content by default.</p>
+<hr>
+<h2>Architecture</h2>
+<p>CodeDumper is structured around a browser-first React frontend and a processing core that can be reused by desktop and CLI workflows.</p>
+<pre><code class="language-text">.
+├── src/
+│   ├── components/          # UI components
+│   ├── services/            # ZIP processing, filtering, tokenization, scanning
+│   ├── workers/             # Web Worker entry points
+│   └── App.tsx              # Main application shell
+├── electron/                # Hardened Electron main/preload code
+├── cli/                     # Headless CLI entry point
+├── .github/actions/         # GitHub Action definition
+├── .github/workflows/       # CI example workflow
+├── package.json
+├── vite.config.ts
+└── tsconfig.json
+</code></pre>
+<p>The core pipeline is approximately:</p>
+<pre><code class="language-text">ZIP upload
+  → archive inspection
+  → path normalization
+  → ignore-rule loading
+  → stack detection
+  → file tree selection
+  → LLM Code Review filtering
+  → guarded extraction
+  → text decoding
+  → Unicode normalization
+  → secret scanning
+  → high-entropy scanning
+  → prompt-injection scanning
+  → custom enterprise rules
+  → optional condensation / skeletonization
+  → token estimation
+  → semantic chunking
+  → Markdown/XML/JSON composition
+  → token explorer / preview / download / local LLM handoff
+</code></pre>
+<hr>
+<h2>Installation</h2>
+<h3>Requirements</h3>
+<ul>
+<li>Node.js 20 LTS recommended</li>
+<li>npm 10+</li>
+<li>Windows, macOS, or Linux</li>
+</ul>
+<p>Electron installation requires access to Electron release downloads during normal package installation.</p>
+<h3>Install dependencies</h3>
+<pre><code class="language-bash">npm install
+</code></pre>
+<p>If package installation fails because of environment-specific Electron download restrictions, web-only verification can be performed with:</p>
+<pre><code class="language-bash">npm install --ignore-scripts
+</code></pre>
+<hr>
+<h2>Development</h2>
+<h3>Start the web app</h3>
+<pre><code class="language-bash">npm run dev
+</code></pre>
+<h3>Build the web app</h3>
+<pre><code class="language-bash">npm run build:web
+</code></pre>
+<h3>Type-check</h3>
+<pre><code class="language-bash">npx tsc --noEmit
+</code></pre>
+<h3>Start Electron development mode</h3>
+<pre><code class="language-bash">npm run electron:dev
+</code></pre>
+<h3>Build desktop package</h3>
+<pre><code class="language-bash">npm run electron:build
+</code></pre>
+<hr>
+<h2>CLI usage</h2>
+<p>CodeDumper includes a headless CLI for automation and CI pipelines.</p>
+<p>Basic usage:</p>
+<pre><code class="language-bash">npm run cli -- project.zip codedump.md
+</code></pre>
+<p>With token chunking:</p>
+<pre><code class="language-bash">npm run cli -- project.zip codedump.md --max-tokens 120000
+</code></pre>
+<p>With review focus paths:</p>
+<pre><code class="language-bash">npm run cli -- project.zip codedump.md --focus src/auth.ts,src/auth.test.ts
+</code></pre>
+<p>With a newline-separated or diff-derived focus list:</p>
+<pre><code class="language-bash">npm run cli -- project.zip codedump.md --focus-file changed-files.txt
+</code></pre>
+<p>With a patch file:</p>
+<pre><code class="language-bash">npm run cli -- project.zip codedump.md --focus-from-patch pr-123.patch
+</code></pre>
+<p>With custom enterprise rules:</p>
+<pre><code class="language-bash">npm run cli -- project.zip codedump.md --custom-rules rules.json
+</code></pre>
+<p>With skeleton condensation:</p>
+<pre><code class="language-bash">npm run cli -- project.zip codedump.md --ast-mode skeleton
+</code></pre>
+<p>Recommended CI mode:</p>
+<pre><code class="language-bash">npm run cli -- repository.zip codedump.md --llm-code-review --semantic-chunking --scan-secrets --scan-prompt-injection
+</code></pre>
+<hr>
+<h2>GitHub Action usage</h2>
+<p>The repository includes a local GitHub Action and workflow template for producing LLM-ready review artifacts in CI.</p>
+<p>Example workflow behavior:</p>
+<ol>
+<li>checkout repository</li>
+<li>package repository as ZIP</li>
+<li>run CodeDumper CLI</li>
+<li>upload generated dump as workflow artifact</li>
+</ol>
+<p>Typical usage:</p>
+<pre><code class="language-yaml">name: CodeDump Review Artifact
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  codedump:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - run: npm ci
+
+      - run: zip -r repository.zip . -x &quot;node_modules/*&quot; &quot;dist/*&quot; &quot;.git/*&quot;
+
+      - run: npm run cli -- repository.zip codedump.md --llm-code-review --max-tokens 120000
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: llm-code-review-dump
+          path: codedump.md
+</code></pre>
+<hr>
+<h3>LM Studio on localhost or LAN</h3>
+<p>The Local LLM Panel accepts either a server base URL or a full chat-completions endpoint.</p>
+<p>Examples:</p>
+<pre><code class="language-text">http://localhost:1234
+http://localhost:1234/v1/chat/completions
+http://192.168.178.62:1234
+http://192.168.178.62:1234/v1/chat/completions
+</code></pre>
+<p>For LM Studio:</p>
+<ol>
+<li>Start the LM Studio local server.</li>
+<li>Load a model in LM Studio.</li>
+<li>Enable LAN access / bind to all interfaces if CodeDumper runs on another device.</li>
+<li>Allow port <code>1234</code> in the firewall.</li>
+<li>In CodeDumper, choose <strong>OpenAI-compatible / LM Studio</strong>.</li>
+<li>Click <strong>Load models</strong> or enter the exact running model name manually.</li>
+<li>Send the dump.</li>
+</ol>
+<p>If the browser shows <code>Failed to fetch</code>, the problem is usually one of these:</p>
+<ul>
+<li>the LM Studio server is not running</li>
+<li>the URL is missing the correct host or port</li>
+<li>the server is bound only to <code>localhost</code>, but CodeDumper is using a LAN IP</li>
+<li>the firewall blocks port <code>1234</code></li>
+<li>the server rejects browser CORS requests</li>
+</ul>
+<p>A quick check is to open this URL directly in the browser:</p>
+<pre><code class="language-text">http://192.168.178.62:1234/v1/models
+</code></pre>
+<p>If that works in a browser tab but the panel still cannot fetch it, use the Electron app or enable CORS support in the local server.</p>
+<hr>
+<h2>Recommended LLM workflow</h2>
+<p>For a full repository review:</p>
+<ol>
+<li>Enable <strong>LLM Code Review Mode</strong>.</li>
+<li>Keep secret scanning enabled.</li>
+<li>Keep prompt-injection scanning enabled for untrusted repositories.</li>
+<li>Exclude generated data, reports, binaries, and lockfiles.</li>
+<li>Use semantic chunking when the output exceeds the target model context window.</li>
+<li>Review warnings before sending any dump to an external system.</li>
+</ol>
+<p>For pull-request review:</p>
+<ol>
+<li>Enable <strong>Diff / Review Focus Mode</strong>.</li>
+<li>Provide changed file paths or a unified diff.</li>
+<li>Include nearby tests and companions.</li>
+<li>Generate a compact review dump.</li>
+<li>Send only the focused dump to the LLM.</li>
+</ol>
+<hr>
+<h2>What should not be included in an LLM code dump</h2>
+<p>CodeDumper is intentionally aggressive about excluding low-value or risky material.</p>
+<p>Usually exclude:</p>
+<pre><code class="language-text">node_modules/**
+dist/**
+build/**
+release/**
+coverage/**
+reports/**
+data/**
+.git/**
+*.lock
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+*.map
+*.log
+*.min.js
+*.pem
+*.key
+.env
+.env.*
+</code></pre>
+<p>Usually include:</p>
+<pre><code class="language-text">src/**
+app/**
+lib/**
+server/**
+client/**
+components/**
+services/**
+routes/**
+controllers/**
+models/**
+tests/**
+__tests__/**
+*.test.*
+*.spec.*
+package.json
+pyproject.toml
+requirements.txt
+Cargo.toml
+go.mod
+pom.xml
+build.gradle
+*.csproj
+*.sln
+README.md
+ARCHITECTURE.md
+SECURITY.md
+</code></pre>
+<hr>
+<h2>Privacy model</h2>
+<p>CodeDumper is a local processing tool. By design:</p>
+<ul>
+<li>uploaded ZIP files are processed locally</li>
+<li>no LLM provider is contacted</li>
+<li>no project data is uploaded by the app during dump generation</li>
+<li>token and cost estimates are calculated offline</li>
+<li>users remain responsible for where they later paste, upload, or send the generated dump</li>
+</ul>
+<hr>
+<h2>Limitations</h2>
+<p>CodeDumper reduces risk, but it cannot guarantee that every sensitive value or malicious instruction will be detected.</p>
+<p>Known limitations:</p>
+<ul>
+<li>entropy scanning can produce false positives</li>
+<li>prompt-injection phrase matching can miss novel attacks</li>
+<li>entropy scanning can redact harmless high-randomness identifiers</li>
+<li>prompt-injection phrase matching can miss novel attacks</li>
+<li>code condensation may remove comments that are semantically useful</li>
+<li>skeleton mode is structural and may omit implementation details required for deep debugging</li>
+<li>semantic chunking is heuristic and not a full dependency graph for every language</li>
+<li>local LLM handoff depends on the local model server and its context-window limits</li>
+<li>archive parsing is hardened but adversarial file formats are inherently risky</li>
+<li>generated dumps should still be reviewed before being shared externally</li>
+</ul>
+<hr>
+<h2>Enterprise hardening checklist</h2>
+<p>Before using CodeDumper in a regulated or high-sensitivity environment:</p>
+<ul>
+<li>run dependency audit in your own supply-chain environment</li>
+<li>pin Node.js and npm versions in CI</li>
+<li>review Electron build and signing configuration</li>
+<li>enforce internal allowlists for export destinations</li>
+<li>keep secret scanning enabled by default</li>
+<li>keep prompt-injection scanning enabled for third-party code</li>
+<li>set conservative token and size limits</li>
+<li>store generated dumps as sensitive artifacts</li>
+<li>avoid sending proprietary code to external LLM providers unless approved by policy</li>
+</ul>
+<hr>
+<h2>Scripts</h2>
+<p>Common scripts:</p>
+<pre><code class="language-bash">npm run dev
+npm run build:web
+npm run electron:dev
+npm run electron:build
+npm run cli -- project.zip codedump.md
+npx tsc --noEmit
+</code></pre>
+<hr>
+<h2>Technology stack</h2>
+<ul>
+<li>React</li>
+<li>TypeScript</li>
+<li>Vite</li>
+<li>Electron</li>
+<li>Web Workers</li>
+<li><code>fflate</code></li>
+<li><code>js-tiktoken</code></li>
+<li><code>minimatch</code></li>
+<li>Tailwind CSS</li>
+<li>local LLM compatible HTTP APIs</li>
+</ul>
+<hr>
+<h2>Roadmap</h2>
+<p>Potential next improvements:</p>
+<ul>
+<li>full AST-based condensation using Tree-sitter</li>
+<li>language-specific dependency graph extraction</li>
+<li>SARIF export for security findings</li>
+<li>policy profiles for regulated environments</li>
+<li>organization-wide ignore-rule templates</li>
+<li>signed desktop releases</li>
+<li>deterministic dump manifests and checksums</li>
+<li>full Tree-sitter WASM grammar integration for more languages</li>
+<li>language-specific dependency graph extraction</li>
+<li>SARIF export for security findings</li>
+<li>policy profiles for regulated environments</li>
+<li>organization-wide ignore-rule templates</li>
+<li>signed desktop releases</li>
+<li>deterministic dump manifests and checksums</li>
+<li>optional local-only embedding index for repository navigation</li>
+</ul>
+<hr>
+<h2>License</h2>
+<p>Add your license here, for example:</p>
+<pre><code class="language-text">MIT License
+</code></pre>
+<hr>
+<h2>Project status</h2>
+<p>CodeDumper is designed as a professional local-first tool for secure, token-aware, LLM-ready repository export. It is suitable for developer workflows, internal review automation, and enterprise evaluation, provided that generated artifacts are handled according to the organization’s data-protection policies.</p>
+</main>
+</body>
+</html>

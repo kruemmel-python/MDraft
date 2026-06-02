@@ -1,0 +1,30 @@
+MDraft v0.10.3 - Link-Validierung + Bildpfad-Vorschläge
+
+Neues Workspace-Substrat:
+- WorkspaceAsset[] für nicht-Markdown-Dateien.
+- LinkResolver validiert Links gegen Markdown-Dateien und Assets.
+- MarkdownLink unterscheidet normale Links und Bildlinks.
+- LinkValidationReport aggregiert resolved/unresolved und Bildlink-Zahlen.
+- ImageSuggestion-Engine schlägt Bildpfade aus Workspace-Assets vor.
+
+UI:
+Projekt
+  Links validieren...          Ctrl+Shift+L
+  Bildpfad-Vorschläge...      Ctrl+Shift+I
+
+Tests:
+- gelöste Links
+- kaputte Links
+- gelöste Bildpfade
+- kaputte Bildpfade
+- Bildvorschläge anhand Query und Workspace-Assets
+
+
+Menü:
+  Projekt -> Links validieren...        Ctrl+Shift+L
+  Projekt -> Bildpfad-Vorschläge...     Ctrl+Shift+I
+
+Substrat:
+  WorkspaceIndex.assets enthält Nicht-Markdown-Dateien.
+  LinkResolver löst Markdown-Links gegen Markdown-Dateien und Assets auf.
+  Bildpfad-Vorschläge filtern Assets auf Bildformate.

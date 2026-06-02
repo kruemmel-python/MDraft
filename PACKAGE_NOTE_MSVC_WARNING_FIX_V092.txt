@@ -1,0 +1,9 @@
+MDraft v0.9.2
+
+Fix:
+- MSVC /WX failed in gui_win32/src/native_window_win32.cpp because draw_render_preview()
+  declared a local status_h variable that was initialized but not referenced.
+- Removed that unused local variable.
+- Keeps v0.9.1 behavior:
+  Ansicht -> RenderIR/HTML Live-Vorschau anzeigen
+  Ctrl+P toggle

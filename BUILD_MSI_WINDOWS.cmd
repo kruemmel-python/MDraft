@@ -1,0 +1,16 @@
+@echo off
+setlocal
+cd /d "%~dp0"
+if "%CMAKE_EXE%"=="" set "CMAKE_EXE=C:\Program Files\CMake\bin\cmake.exe"
+if "%CTEST_EXE%"=="" set "CTEST_EXE=C:\Program Files\CMake\bin\ctest.exe"
+if "%CPACK_EXE%"=="" set "CPACK_EXE=C:\Program Files\CMake\bin\cpack.exe"
+if exist build_vs_msi rmdir /s /q build_vs_msi
+"%CMAKE_EXE%" -S . -B build_vs_msi -G "Visual Studio 17 2022" -A x64 -DMDRAFT_BUILD_TESTS=ON || exit /b 1
+"%CMAKE_EXE%" --build build_vs_msi --config Release --target mdraft-win32 mdraft-cli --parallel || exit /b 1
+"%CMAKE_EXE%" --build build_vs_msi --config Release --target test_core test_io test_ui_model test_runtime test_workspace --parallel || exit /b 1
+"%CTEST_EXE%" --test-dir build_vs_msi -C Release --output-on-failure || exit /b 1
+cd build_vs_msi
+"%CPACK_EXE%" -G WIX -C Release || exit /b 1
+cd ..
+dir /b build_vs_msi\*.msi
+endlocal

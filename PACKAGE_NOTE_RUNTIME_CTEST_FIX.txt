@@ -1,0 +1,11 @@
+MDraft v0.9.3
+
+Fix:
+- Runtime-Test benutzt keine harte Quelle-Root-Annahme "build/mdraft_runtime_test.md" mehr.
+- CTest/MSVC führt Tests im build_vs_msi-Arbeitsraum aus; dort existiert kein verschachteltes build/-Verzeichnis.
+- Testartefakte liegen jetzt im aktuellen CTest-Arbeitsverzeichnis.
+- test_runtime fängt std::exception ab und schreibt die Ursache nach stderr statt mit unscharfem Windows-Failfast-Code zu enden.
+
+RenderIR Preview:
+- Menüpunkt Ansicht -> RenderIR/HTML Live-Vorschau anzeigen bleibt erhalten.
+- Ctrl+P bleibt erhalten.

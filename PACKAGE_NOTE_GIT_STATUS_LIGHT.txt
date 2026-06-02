@@ -1,0 +1,33 @@
+MDraft v0.11.2 - Git-Status light
+
+Substrat:
+  Workspace
+    -> GitAdapter
+    -> GitStatusReport
+    -> UI Status / Project Menu
+
+Keine LibGit2-Abhängigkeit:
+  - git rev-parse --show-toplevel
+  - git status --porcelain=v1
+
+Datenmodell:
+  GitFileStatus {
+    kind,
+    index_status,
+    worktree_status,
+    path,
+    old_path
+  }
+
+  GitStatusReport {
+    root,
+    files[],
+    modified/added/deleted/renamed/untracked/conflict counts
+  }
+
+UI:
+  Projekt -> Git-Status light...    Ctrl+Shift+G
+
+Fehlermodus:
+  Wenn git.exe nicht im PATH ist oder kein Repository gefunden wird,
+  bleibt MDraft stabil und zeigt eine Statusmeldung/MessageBox.

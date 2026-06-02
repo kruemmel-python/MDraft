@@ -1,0 +1,19 @@
+MDraft Workspace/Symbol Navigation test-build fix
+
+Problem:
+  CMake/CTest registered the workspace test:
+    add_test(NAME workspace COMMAND test_workspace)
+
+  The Visual-Studio build scripts only built:
+    test_core test_io test_ui_model test_runtime
+
+  Therefore CTest correctly looked for:
+    build_vs/Release/test_workspace.exe
+
+  but the executable had never been built.
+
+Fix:
+  BUILD_WINDOWS.cmd/.ps1 and BUILD_MSI_WINDOWS.cmd/.ps1 now build:
+    test_core test_io test_ui_model test_runtime test_workspace
+
+This is a build-script dependency fix, not a workspace logic fix.

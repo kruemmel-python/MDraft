@@ -1,0 +1,20 @@
+MDraft v0.9.6
+
+Fixes:
+- Preview scroll rebuilt from clean v0.9.4 source; v0.9.5 had a bad native_window merge.
+- Preview pane has independent RenderIR scroll state:
+  mouse wheel over preview, click-focus + Up/Down/Page/Home/End.
+- All HTML themes restored:
+  File -> Export HTML -> Standard, Cyberpunk, Dystopie, Horror, Abenteuer.
+- Preview theme selection added:
+  View -> Preview-Thema -> Standard, Cyberpunk, Dystopie, Horror, Abenteuer.
+- CLI --theme restored.
+- RenderIR table block detection added:
+  pipe-table header/separator/body is now rendered as a real table grid in DisplayList/SVG/GDI.
+- Minimal math text projection improved:
+  common Greek symbols, hbar, partial, frac, simple superscript/subscript replacements.
+
+Validation:
+  make clean
+  make test
+  make all

@@ -1,0 +1,35 @@
+MDraft v0.12.0 - Snippets + Bilder
+
+Snippets:
+- Neuer Workspace-Modulpfad:
+  workspace/include/mtx/snippets.hpp
+  workspace/src/snippets.cpp
+- Default-Snippets:
+  h1, h2, todo, table, math, mermaid, code, img, note
+- UI:
+  Bearbeiten -> Snippet einfügen
+  Shortcut: Ctrl+J
+- Verhalten:
+  Trigger unter Cursor oder markierter Trigger wird ersetzt.
+  ${cursor}-Marker wird entfernt und Cursor an diese Position gesetzt.
+
+Bilder:
+- UI:
+  Bearbeiten -> Bild einfügen...
+- Dialog:
+  PNG, JPG, JPEG, GIF, WEBP, BMP, SVG
+- Einfügung:
+  ![alt](relative/path)
+- RenderIR:
+  DrawKind::Image
+  path: aufgelöster Dateisystempfad für GDI Preview
+  href: Markdown/HTML-Href für SVG Export
+- Preview:
+  Win32 GDI+ lädt und zeichnet Bilder.
+- Export:
+  SVG-in-HTML erzeugt <image href="..."> aus derselben DisplayList.
+- Tests:
+  DisplayList image_count
+  SVG <image>
+  Snippet-Expansion
+  make_markdown_image()

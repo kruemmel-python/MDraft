@@ -1,0 +1,22 @@
+MDraft v0.12.3 Rename Consolidation
+
+Product name:
+  MDraft
+
+Subtitle:
+  Native Markdown Workspace Editor
+
+Developer:
+  Ralf Krümmel
+
+Renamed product-facing surface:
+  - MSI product name
+  - Start menu folder
+  - executable names: mdraft-win32.exe, mdraft-cli.exe
+  - CLI usage text
+  - Win32 window class/title/about strings
+  - README / ARCHITECTURE / USER_GUIDE / FEATURE_MATRIX / CHANGELOG
+  - build scripts and Makefile targets
+
+Internal namespace remains mtx intentionally:
+  This preserves source ABI and avoids a needless churn rename in core types.

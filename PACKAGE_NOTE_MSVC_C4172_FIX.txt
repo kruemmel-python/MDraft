@@ -1,0 +1,17 @@
+MDraft v0.11.1 / v0.11.0 MSVC testfix
+
+Fix:
+  MSVC C4172 in gui_win32/src/native_window_win32.cpp
+
+Cause:
+  preview_markdown_source() returned const std::string&.
+  In live mode it returned runtime_->buffer().str(), which is a temporary std::string.
+  MSVC /WX correctly rejected this as returning an address/reference to a temporary.
+
+Patch:
+  preview_markdown_source() now returns std::string by value.
+  The draw path stores it as a local std::string value.
+
+This preserves Preview-Locking:
+  locked mode returns locked_preview_markdown_
+  live mode returns runtime_->buffer().str()

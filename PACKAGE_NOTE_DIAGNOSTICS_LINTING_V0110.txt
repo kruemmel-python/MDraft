@@ -1,0 +1,32 @@
+MDraft v0.11.0 - Diagnostics/Linting Substrate
+
+Substrate:
+  WorkspaceIndex -> Diagnostics/Linting -> UI report
+
+New module:
+  workspace/include/mtx/workspace_lint.hpp
+  workspace/src/workspace_lint.cpp
+
+Diagnostic model extended with:
+  line
+  column
+  code
+  fix_hint
+
+Built-in Markdown lint rules:
+  MD001 trailing whitespace
+  MD002 tabs in Markdown text
+  MD003 long line
+  MD004 heading level jump
+  MD005 duplicate heading anchor
+  MD006 image without alt text
+  MD007 link without visible text
+  MD008 malformed pipe table shape
+  MD009 missing H1
+  MD010 multiple H1 headings
+
+UI:
+  Projekt -> Diagnostics/Linting...  Ctrl+Shift+D
+
+The implementation keeps diagnostics as data, not UI strings.
+This is the substrate for future extension ABI diagnostics.

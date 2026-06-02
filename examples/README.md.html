@@ -1,0 +1,616 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MDraft Export</title>
+<style>
+:root{color-scheme:light;--fg:#24292f;--muted:#57606a;--border:#d0d7de;--bg:#ffffff;--soft:#f6f8fa;--accent:#0969da;}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;}
+.markdown-body{box-sizing:border-box;max-width:980px;margin:32px auto;padding:0 32px;}
+h1,h2,h3,h4,h5,h6{margin:24px 0 16px;font-weight:600;line-height:1.25;}
+h1{font-size:2em;border-bottom:1px solid var(--border);padding-bottom:.3em;}h2{font-size:1.5em;border-bottom:1px solid var(--border);padding-bottom:.3em;}h3{font-size:1.25em;}
+p{margin:0 0 16px;}a{color:var(--accent);}blockquote{margin:0 0 16px;padding:0 1em;color:var(--muted);border-left:.25em solid var(--border);}
+ul,ol{margin-top:0;margin-bottom:16px;padding-left:2em;}li{margin:.25em 0;}.task-list-item{list-style-type:none;}input[type=checkbox]{margin:0 .45em .2em -1.6em;vertical-align:middle;}
+code{font-family:ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",Menlo,monospace;font-size:85%;background:rgba(175,184,193,.2);border-radius:6px;padding:.2em .4em;}
+pre{margin:0 0 16px;padding:16px;overflow:auto;background:var(--soft);border-radius:6px;}pre code{padding:0;background:transparent;font-size:100%;}
+table{border-spacing:0;border-collapse:collapse;margin:0 0 16px;width:auto;}th,td{padding:6px 13px;border:1px solid var(--border);}tr:nth-child(2n){background:var(--soft);}hr{height:.25em;padding:0;margin:24px 0;background:var(--border);border:0;}
+.math{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;color:#8250df;background:#f6f8fa;border-radius:6px;padding:.1em .3em;}.math-block{display:block;margin:0 0 16px;padding:16px;background:#f6f8fa;border-radius:6px;color:#8250df;}
+</style>
+</head>
+<body>
+<main class="markdown-body">
+<h1>KALYX</h1>
+<p><strong>KALYX</strong> is a low-level KDNA/KFIELD research substrate for turning ordered data into testable transition grammars. It was created by <strong>Ralf Krümmel</strong> and is released under the <strong>Apache License 2.0</strong>.</p>
+<p>KALYX is not a CRUD framework, not a machine-learning wrapper, and not a visualization demo. It is a deterministic data-substrate system: raw ordered signals are converted into compact symbol streams, projected into a KDNA representation, induced into KGRAM transition grammars, and evaluated through self/cross matrices and null models.</p>
+<p>The central operational idea is simple:</p>
+<pre><code class="language-text">ordered source field
+→ canonical symbols
+→ KDNA projection
+→ KGRAM transition grammar
+→ self/cross KFIELD matrix
+→ null models
+→ report / library artifact
+</code></pre>
+<p>KALYX currently contains two major validated application tracks:</p>
+<ol>
+<li><strong>Genome substrate analysis</strong>: full chromosome FASTA streams are transformed into k-mer symbol streams, KDNA streams, chromosome self-grammars, genome-wide self/cross matrices, and KGLIB enterprise libraries.</li>
+<li><strong>Language substrate analysis</strong>: Universal Dependencies CoNLL-U corpora are transformed into linguistic symbol streams, KDNA streams, language self-grammars, self/cross language matrices, true null models, and KLLIB language libraries.</li>
+</ol>
+<p>The repository still uses the historical executable prefix <code>kdna_*</code>. The system name is <strong>KALYX</strong>.</p>
+<hr>
+<h2>Why KALYX Exists</h2>
+<p>Most analytical pipelines collapse ordered structure into aggregate features too early. KALYX keeps order as a first-class substrate.</p>
+<p>For genomes, that means it does not only count k-mers. It builds transition grammars over projected k-mer streams and asks whether one chromosome grammar explains another chromosome stream.</p>
+<p>For languages, it does not only count parts of speech. It builds transition grammars over UPOS/DEPREL-derived symbol streams and asks whether one language grammar explains another language stream better than shuffled, rotated, or block-boundary null models.</p>
+<p>KALYX is designed around:</p>
+<ul>
+<li>fixed binary ABIs,</li>
+<li>explicit memory layouts,</li>
+<li>reproducible stream artifacts,</li>
+<li>CPU reference paths,</li>
+<li>optional OpenCL acceleration,</li>
+<li>self/cross differential measurement,</li>
+<li>true null models,</li>
+<li>auditable library files.</li>
+</ul>
+<hr>
+<h2>Core Pipeline</h2>
+<pre><code class="language-text">                ┌────────────────────────┐
+                │ source data             │
+                │ FASTA / CoNLL-U / CSV   │
+                └───────────┬────────────┘
+                            │
+                            ▼
+                ┌────────────────────────┐
+                │ KSTREAM / raw symbols   │
+                │ uint64[n] + summary     │
+                └───────────┬────────────┘
+                            │
+                            ▼
+                ┌────────────────────────┐
+                │ KDNA projection         │
+                │ affine KDNA symbol map  │
+                └───────────┬────────────┘
+                            │
+                            ▼
+                ┌────────────────────────┐
+                │ KGRAM01                 │
+                │ transition grammar      │
+                └───────────┬────────────┘
+                            │
+                            ▼
+                ┌────────────────────────┐
+                │ KFIELD / KGENOME matrix │
+                │ self + cross coupling   │
+                └───────────┬────────────┘
+                            │
+                            ▼
+                ┌────────────────────────┐
+                │ null models + reports   │
+                │ libraries: KGLIB/KLLIB  │
+                └────────────────────────┘
+</code></pre>
+<hr>
+<h2>Repository Layout</h2>
+<pre><code class="language-text">include/        Stable C headers and binary ABI definitions
+src/            KDNA core implementation
+kernels/        OpenCL kernels
+tools/          Command-line tools
+tests/          CTest test programs
+scripts/        PowerShell orchestration scripts
+python/         Python helper bindings
+</code></pre>
+<p>Important binary interfaces:</p>
+<pre><code class="language-text">KGRAM01   fixed-size transition grammar
+KGENOME1  self/cross matrix record format
+KGLIB001  genome library artifact
+KSTREAM1  generic stream summary header
+KLLIB001  language library artifact
+</code></pre>
+<hr>
+<h2>Build Requirements</h2>
+<h3>Windows</h3>
+<p>Recommended environment:</p>
+<ul>
+<li>Windows 10/11</li>
+<li>Visual Studio 2022 Build Tools</li>
+<li>CMake 3.20+</li>
+<li>PowerShell 5.1 or newer</li>
+<li>OpenCL runtime and device driver, optional</li>
+</ul>
+<pre><code class="language-powershell">cd H:\path\to\KALYX
+
+$CMAKE_EXE = &quot;C:\Program Files\CMake\bin\cmake.exe&quot;
+$CTEST_EXE = &quot;C:\Program Files\CMake\bin\ctest.exe&quot;
+
+&amp; $CMAKE_EXE -S . -B build_vs `
+  -G &quot;Visual Studio 17 2022&quot; `
+  -A x64
+
+&amp; $CMAKE_EXE --build build_vs --config Release --parallel
+
+&amp; $CTEST_EXE --test-dir build_vs -C Release --output-on-failure
+</code></pre>
+<h3>Linux / Unix-like systems</h3>
+<p>The core is C11 and CMake based. The PowerShell orchestration scripts are Windows-oriented, but the C tools can be built with a standard CMake toolchain.</p>
+<pre><code class="language-bash">cmake -S . -B build
+cmake --build build --config Release -j
+ctest --test-dir build --output-on-failure
+</code></pre>
+<hr>
+<h2>Main Executables</h2>
+<h3>Core KDNA</h3>
+<table>
+<thead>
+<tr><th>Tool</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>kdna_project</code></td><td>Projects a <code>uint64</code> symbol stream into a KDNA symbol stream.</td></tr>
+<tr><td><code>kdna_probe</code></td><td>Inspects binary artifacts and prints magic/version/hash metadata.</td></tr>
+<tr><td><code>kdna_symbol_gram</code></td><td>Builds a KGRAM01 transition grammar from a KDNA stream.</td></tr>
+<tr><td><code>kdna_genome_matrix</code></td><td>Builds a self/cross KFIELD/KGENOME matrix from streams and grammars.</td></tr>
+<tr><td><code>kdna_field_null_matrix</code></td><td>Builds true null-model matrices for KFIELD/KLANG experiments.</td></tr>
+</tbody></table>
+<h3>Genome Track</h3>
+<table>
+<thead>
+<tr><th>Tool</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>kdna_fasta_symbols</code></td><td>Converts FASTA sequences into k-mer <code>uint64</code> streams.</td></tr>
+<tr><td><code>kdna_genome_matrix</code></td><td>Computes genome self/cross grammar matrices.</td></tr>
+<tr><td><code>kdna_genome_library</code></td><td>Builds KGLIB001 enterprise genome libraries from existing artifacts.</td></tr>
+</tbody></table>
+<h3>KSTREAM / KLANG Track</h3>
+<table>
+<thead>
+<tr><th>Tool</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>kdna_stream_bytes</code></td><td>Converts byte streams into KSTREAM-compatible symbols.</td></tr>
+<tr><td><code>kdna_stream_tokens</code></td><td>Converts token streams into KSTREAM-compatible symbols.</td></tr>
+<tr><td><code>kdna_stream_csv</code></td><td>Converts CSV columns into KSTREAM-compatible symbols.</td></tr>
+<tr><td><code>kdna_stream_conllu</code></td><td>Converts Universal Dependencies CoNLL-U files into linguistic KSTREAM symbols.</td></tr>
+<tr><td><code>kdna_stream_probe</code></td><td>Inspects KSTREAM summary headers.</td></tr>
+<tr><td><code>kdna_klang_library</code></td><td>Builds KLLIB001 language libraries from KLANG suite artifacts.</td></tr>
+</tbody></table>
+<hr>
+<h2>Genome Analysis</h2>
+<h3>Objective</h3>
+<p>The genome track asks:</p>
+<pre><code class="language-text">Does a chromosome-specific KGRAM explain only its own KDNA stream,
+or does it also explain other chromosome streams?
+</code></pre>
+<p>KALYX processes chromosomes as ordered fields. For the human genome reference runs, chromosomes <code>chr1</code> through <code>chr22</code>, <code>chrX</code>, and <code>chrY</code> were treated as independent sources.</p>
+<h3>Genome Artifact Chain</h3>
+<pre><code class="language-text">chrN.fa
+→ chrN_k16.u64
+→ chrN_k16.kfsum
+→ chrN_k16_kdna.u64
+→ chrN_k16_self.kgram
+→ human_chr1_22_XY_full_k16.kgenome
+→ human_chr1_22_XY_full_k16.csv
+→ human_kdna_library.kglib
+→ human_kdna_library.json
+→ human_kdna_library.csv
+</code></pre>
+<h3>Genome Semantics</h3>
+<table>
+<thead>
+<tr><th>Artifact</th><th>Meaning</th></tr>
+</thead>
+<tbody>
+<tr><td><code>*_k16.u64</code></td><td>Raw k=16 DNA k-mer stream.</td></tr>
+<tr><td><code>*.kfsum</code></td><td>FASTA stream summary.</td></tr>
+<tr><td><code>*_kdna.u64</code></td><td>KDNA-projected chromosome stream.</td></tr>
+<tr><td><code>*_self.kgram</code></td><td>Self-induced chromosome grammar.</td></tr>
+<tr><td><code>*.kgenome</code></td><td>Binary self/cross matrix.</td></tr>
+<tr><td><code>*.csv</code></td><td>Matrix metrics for inspection/reporting.</td></tr>
+<tr><td><code>*.kglib</code></td><td>Enterprise genome library index.</td></tr>
+</tbody></table>
+<h3>Genome Metrics</h3>
+<p><code>kdna_genome_matrix</code> emits one row/column cell per stream/grammar pair.</p>
+<p>Important metrics:</p>
+<table>
+<thead>
+<tr><th>Metric</th><th>Meaning</th></tr>
+</thead>
+<tbody>
+<tr><td><code>baseline_accuracy</code></td><td>Accuracy expected from raw variant frequency.</td></tr>
+<tr><td><code>kgram_accuracy</code></td><td>Fraction of test transitions explained by the grammar.</td></tr>
+<tr><td><code>lift</code></td><td><code>kgram_accuracy - baseline_accuracy</code>.</td></tr>
+<tr><td><code>surprise_rate</code></td><td>Fraction of transitions not explained by grammar.</td></tr>
+<tr><td><code>out_of_grammar</code></td><td>Count of test transitions outside the grammar.</td></tr>
+<tr><td><code>grammar_edges</code></td><td>Number of KGRAM rules in the column grammar.</td></tr>
+</tbody></table>
+<h3>What Was Achieved With Genomes</h3>
+<p>KALYX was used to build a full chromosome-level pipeline for the human genome:</p>
+<ul>
+<li>all autosomes and sex chromosomes were processed as separate streams,</li>
+<li>k=16 symbol streams were generated from FASTA,</li>
+<li>KDNA-projected streams were generated,</li>
+<li>self KGRAMs were built per chromosome,</li>
+<li>a genome-wide self/cross matrix was produced,</li>
+<li>an enterprise chromosome library layer was built to index existing artifacts without recomputation.</li>
+</ul>
+<p>The important architectural outcome is that the genome is no longer just a set of sequence files. It becomes an auditable KFIELD library of projected streams, grammars, cross-relations, hashes, and matrix metrics.</p>
+<hr>
+<h2>Language Analysis: KLANG</h2>
+<p>KLANG is the language application layer inside KALYX.</p>
+<p>It maps Universal Dependencies CoNLL-U corpora into KSTREAM symbols and then uses the same KDNA/KGRAM/KFIELD path that the genome track uses.</p>
+<h3>Language Pipeline</h3>
+<pre><code class="language-text">*.conllu
+→ kdna_stream_conllu
+→ *_upos_wN.u64
+→ *_upos_wN.kstream
+→ kdna_project
+→ *_upos_wN_kdna.u64
+→ kdna_symbol_gram
+→ *_upos_wN_self.kgram
+→ kdna_genome_matrix / KFIELD
+→ kdna_field_null_matrix
+→ KLANG report
+→ KLLIB001
+</code></pre>
+<h3>Supported CoNLL-U Fields</h3>
+<p><code>kdna_stream_conllu</code> supports:</p>
+<pre><code class="language-text">upos
+form
+lemma
+feats
+deprel
+upos_feats
+upos_deprel
+lemma_upos
+</code></pre>
+<p>Important options:</p>
+<pre><code class="language-powershell">--field upos
+--window 2
+--stride 1
+--sentence-boundary reset
+--symbol-bits 32
+</code></pre>
+<h3>Why <code>--symbol-bits 32</code> Matters</h3>
+<p>Language symbols are hashed. A direct 64-bit symbol space can be poorly matched to the current KDNA affine projection configuration. KLANG therefore supports folded 32-bit symbols:</p>
+<pre><code class="language-text">linguistic key
+→ FNV1a64
+→ fold32
+→ uint64 symbol compatible with source:[0, 2^32-1]
+</code></pre>
+<p>This avoids degenerate grammars and produces real transition structures.</p>
+<p>Example validated KGRAM rule counts:</p>
+<pre><code class="language-text">DE UPOS w2: 3039 rules
+EN UPOS w2: 4066 rules
+AR UPOS w2: 2556 rules
+</code></pre>
+<hr>
+<h2>Language Reference Run: German ↔ English</h2>
+<h3>Data</h3>
+<p>The validated language run used:</p>
+<pre><code class="language-text">de_gsd-ud-train.conllu
+en_ewt-ud-train.conllu
+</code></pre>
+<p>These are not parallel translation corpora. That is important: the experiment tests whether structural transition grammar transfers across independent German and English corpora, not whether translated content aligns.</p>
+<h3>UPOS w2 Matrix</h3>
+<pre><code class="language-text">DE → DE  accuracy: 0.9966128365
+DE → EN  accuracy: 0.9808771953
+EN → DE  accuracy: 0.9381357403
+EN → EN  accuracy: 0.9895330672
+</code></pre>
+<p>With true null models:</p>
+<pre><code class="language-text">DE → EN observed_minus_null: 0.6898256189
+EN → DE observed_minus_null: 0.7523635943
+</code></pre>
+<p>Interpretation:</p>
+<pre><code class="language-text">German and English share a strong ordered UPOS-w2 transition structure
+in the KDNA/KGRAM space. The effect remains far above symbol_shuffle,
+rotation, and block_boundary null models.
+</code></pre>
+<h3>Multi-Resolution KLANG Suite</h3>
+<p>The suite was run over:</p>
+<pre><code class="language-text">upos_w1
+upos_w2
+upos_w3
+upos_deprel_w2
+</code></pre>
+<p>Observed behavior:</p>
+<table>
+<thead>
+<tr><th>Resolution</th><th>Interpretation</th></tr>
+</thead>
+<tbody>
+<tr><td><code>upos_w1</code></td><td>Very general POS stream; high accuracy but weak delta because nulls also perform strongly.</td></tr>
+<tr><td><code>upos_w2</code></td><td>Strong local POS transition signal.</td></tr>
+<tr><td><code>upos_w3</code></td><td>Harder local syntax; cross accuracy drops but remains far above null.</td></tr>
+<tr><td><code>upos_deprel_w2</code></td><td>POS plus dependency role; strongest structural specificity.</td></tr>
+</tbody></table>
+<p>Representative observed-minus-null values:</p>
+<table>
+<thead>
+<tr><th>Config</th><th>Direction</th><th>observed_minus_null</th></tr>
+</thead>
+<tbody>
+<tr><td><code>upos_w2</code></td><td>DE → EN</td><td>0.6898256189</td></tr>
+<tr><td><code>upos_w2</code></td><td>EN → DE</td><td>0.7523635943</td></tr>
+<tr><td><code>upos_w3</code></td><td>DE → EN</td><td>0.7928200061</td></tr>
+<tr><td><code>upos_w3</code></td><td>EN → DE</td><td>0.6615928745</td></tr>
+<tr><td><code>upos_deprel_w2</code></td><td>DE → EN</td><td>0.6033018176</td></tr>
+<tr><td><code>upos_deprel_w2</code></td><td>EN → DE</td><td>0.5471156628</td></tr>
+</tbody></table>
+<h3>KLLIB001 Language Library</h3>
+<p>The KLANG suite was compiled into a KLLIB001 language library:</p>
+<pre><code class="language-text">magic: KLLIB001
+version: 1
+configs: 4
+cells: 16
+artifact_bytes: 36,864,144
+hash: 0x4f95d1382b6bdd9b
+
+total_de_symbols: 999,856
+total_en_symbols: 768,657
+total_de_kgram_rules: 42,322
+total_en_kgram_rules: 46,325
+
+avg_self_acc:   0.961483684013
+avg_cross_acc:  0.840148995040
+avg_self_delta: 0.615501985309
+avg_cross_delta:0.506771403716
+</code></pre>
+<p>This turns the language experiment into an auditable binary library, not just a report.</p>
+<hr>
+<h2>Language Reference Run: German / English / Arabic Triad</h2>
+<h3>Data</h3>
+<p>The triad run used:</p>
+<pre><code class="language-text">de_gsd-ud-train.conllu
+en_ewt-ud-train.conllu
+ar_padt-ud-train.conllu
+</code></pre>
+<p>Configuration:</p>
+<pre><code class="language-text">field: upos
+window: 2
+symbol_bits: 32
+train: 0.70
+null modes: symbol_shuffle | rotation | block_boundary
+sample_per_cell: 200000
+</code></pre>
+<h3>3×3 Observed Matrix</h3>
+<pre><code class="language-text">DE → DE  accuracy: 0.9966128365
+DE → EN  accuracy: 0.9808771953
+DE → AR  accuracy: 0.7141580765
+
+EN → DE  accuracy: 0.9381357403
+EN → EN  accuracy: 0.9895330672
+EN → AR  accuracy: 0.7698663426
+
+AR → DE  accuracy: 0.8686888783
+AR → EN  accuracy: 0.8991750968
+AR → AR  accuracy: 0.9948424420
+</code></pre>
+<h3>3×3 Observed vs Null</h3>
+<table>
+<thead>
+<tr><th>Direction</th><th>observed_accuracy</th><th>avg_null_accuracy</th><th>observed_minus_null</th></tr>
+</thead>
+<tbody>
+<tr><td>DE → EN</td><td>0.9808771953</td><td>0.2806055999</td><td>0.7002715954</td></tr>
+<tr><td>DE → AR</td><td>0.7141580765</td><td>0.1190307912</td><td>0.5951272853</td></tr>
+<tr><td>EN → DE</td><td>0.9381357403</td><td>0.1738934213</td><td>0.7642423190</td></tr>
+<tr><td>EN → AR</td><td>0.7698663426</td><td>0.1215356130</td><td>0.6483307296</td></tr>
+<tr><td>AR → DE</td><td>0.8686888783</td><td>0.2214076920</td><td>0.6472811864</td></tr>
+<tr><td>AR → EN</td><td>0.8991750968</td><td>0.2511950128</td><td>0.6479800840</td></tr>
+</tbody></table>
+<p>Interpretation:</p>
+<pre><code class="language-text">Arabic is clearly more distant from German/English in raw cross accuracy,
+but it does not collapse to noise. All cross-language directions remain far
+above true null models. The asymmetry suggests that KALYX measures directed
+grammar compatibility rather than simple symmetric similarity.
+</code></pre>
+<hr>
+<h2>Null Models</h2>
+<p>KALYX uses true sequence-order controls, not only label sampling.</p>
+<p>Implemented null modes:</p>
+<table>
+<thead>
+<tr><th>Null mode</th><th>Meaning</th></tr>
+</thead>
+<tbody>
+<tr><td><code>symbol_shuffle</code></td><td>Shuffles symbols while preserving gross symbol inventory.</td></tr>
+<tr><td><code>rotation</code></td><td>Rotates sequence order to disrupt training/test alignment while retaining local continuity.</td></tr>
+<tr><td><code>block_boundary</code></td><td>Tests block-level boundary disruption.</td></tr>
+</tbody></table>
+<p>A result is considered structurally interesting only when observed metrics remain above these null models.</p>
+<hr>
+<h2>Methodological Boundaries</h2>
+<p>KALYX does <strong>not</strong> claim that it has proven biological causality or universal grammar.</p>
+<p>What KALYX can claim from the current runs:</p>
+<pre><code class="language-text">It builds deterministic transition grammars from ordered substrates.
+It measures whether a grammar induced from one source explains another source.
+It compares observed coupling against null models.
+It can preserve and audit results as binary library artifacts.
+</code></pre>
+<p>What KALYX does not yet claim:</p>
+<pre><code class="language-text">It does not infer biological function from chromosome coupling alone.
+It does not prove linguistic universal grammar.
+It does not replace controlled corpus design.
+It does not remove the need for additional languages, domains, and replications.
+</code></pre>
+<hr>
+<h2>Reproducing the Language Suite</h2>
+<h3>DE/EN smoke run</h3>
+<pre><code class="language-powershell">.\scripts\klang_2x2_experiment.ps1 `
+  -DeConllu .\de_gsd-ud-train.conllu `
+  -EnConllu .\en_ewt-ud-train.conllu `
+  -OutDir .\LangOut_smoke `
+  -Field upos `
+  -Window 2 `
+  -SymbolBits 32 `
+  -Train 0.70 `
+  -Backend cpu `
+  -NullSamples 0 `
+  -MaxAutoNullSamples 10000
+</code></pre>
+<h3>DE/EN full v1.2 run</h3>
+<pre><code class="language-powershell">.\scripts\klang_full_v1_2.ps1 `
+  -DeConllu .\de_gsd-ud-train.conllu `
+  -EnConllu .\en_ewt-ud-train.conllu `
+  -OutDir .\LangOut `
+  -Field upos `
+  -Window 2 `
+  -SymbolBits 32 `
+  -Train 0.70 `
+  -Backend cpu `
+  -NullSamples 0 `
+  -MaxAutoNullSamples 200000
+</code></pre>
+<h3>DE/EN multi-resolution suite</h3>
+<pre><code class="language-powershell">.\scripts\klang_suite_v1_2.ps1 `
+  -DeConllu .\de_gsd-ud-train.conllu `
+  -EnConllu .\en_ewt-ud-train.conllu `
+  -OutRoot .\LangSuiteOut `
+  -Train 0.70 `
+  -Backend cpu `
+  -NullSamples 0 `
+  -MaxAutoNullSamples 200000
+</code></pre>
+<h3>Build KLLIB001</h3>
+<pre><code class="language-powershell">.\scripts\klang_library_from_suite.ps1 `
+  -SuiteDir .\LangSuiteOut `
+  -Out .\LangSuiteOut\klang_library.kllib `
+  -Json .\LangSuiteOut\klang_library.json `
+  -Csv .\LangSuiteOut\klang_library_cells.csv `
+  -Exe .\build_vs\Release\kdna_klang_library.exe `
+  -Strict
+</code></pre>
+<hr>
+<h2>Reproducing the Genome Track</h2>
+<p>A typical chromosome-level path is:</p>
+<pre><code class="language-powershell"># FASTA → k=16 symbol stream
+.\build_vs\Release\kdna_fasta_symbols.exe `
+  --in .\Genome\chr17.fa `
+  --out .\GenomeOutFull\chr17_k16.u64 `
+  --summary .\GenomeOutFull\chr17_k16.kfsum `
+  --k 16
+
+# k=16 symbol stream → KDNA projection
+$N = [UInt64]((Get-Item &quot;.\GenomeOutFull\chr17_k16.u64&quot;).Length / 8)
+
+.\build_vs\Release\kdna_project.exe `
+  --symbols .\GenomeOutFull\chr17_k16.u64 `
+  --n $N `
+  --out-symbols .\GenomeOutFull\chr17_k16_kdna.u64 `
+  --mode affine `
+  --k 16 `
+  --xmin -8 `
+  --xmax 8 `
+  --backend opencl
+
+# KDNA stream → chromosome grammar
+$N = [UInt64]((Get-Item &quot;.\GenomeOutFull\chr17_k16_kdna.u64&quot;).Length / 8)
+
+.\build_vs\Release\kdna_symbol_gram.exe `
+  --symbols .\GenomeOutFull\chr17_k16_kdna.u64 `
+  --n $N `
+  --out .\GenomeOutFull\chr17_k16_self.kgram `
+  --train 0.70
+</code></pre>
+<p>The full genome matrix is built from all chromosome entries:</p>
+<pre><code class="language-powershell">.\build_vs\Release\kdna_genome_matrix.exe `
+  --entry chr1  .\GenomeOutFull\chr1_k16_kdna.u64  .\GenomeOutFull\chr1_k16_self.kgram `
+  --entry chr2  .\GenomeOutFull\chr2_k16_kdna.u64  .\GenomeOutFull\chr2_k16_self.kgram `
+  ...
+  --entry chrX  .\GenomeOutFull\chrX_k16_kdna.u64  .\GenomeOutFull\chrX_k16_self.kgram `
+  --entry chrY  .\GenomeOutFull\chrY_k16_kdna.u64  .\GenomeOutFull\chrY_k16_self.kgram `
+  --out .\GenomeOutFull\human_chr1_22_XY_full_k16.kgenome `
+  --csv .\GenomeOutFull\human_chr1_22_XY_full_k16.csv `
+  --train 0.70 `
+  --bins 32
+</code></pre>
+<hr>
+<h2>Testing</h2>
+<p>Run the full test suite:</p>
+<pre><code class="language-powershell">$CTEST_EXE = &quot;C:\Program Files\CMake\bin\ctest.exe&quot;
+
+&amp; $CTEST_EXE --test-dir build_vs -C Release --output-on-failure
+</code></pre>
+<p>Run only KSTREAM/KLANG tests:</p>
+<pre><code class="language-powershell">&amp; $CTEST_EXE --test-dir build_vs -C Release -R &quot;klang|kstream&quot; --output-on-failure
+</code></pre>
+<p>Run KLLIB help test:</p>
+<pre><code class="language-powershell">&amp; $CTEST_EXE --test-dir build_vs -C Release -R &quot;klang_library_help&quot; --output-on-failure
+</code></pre>
+<hr>
+<h2>Design Principles</h2>
+<p>KALYX follows these engineering constraints:</p>
+<pre><code class="language-text">Substrate before UI.
+Runtime before interface.
+ABI before convenience.
+Tests before claims.
+Determinism before aesthetics.
+Reports after null models.
+Libraries after artifact validation.
+</code></pre>
+<hr>
+<h2>Glossary</h2>
+<h3>ABI</h3>
+<p>Application Binary Interface. In KALYX this means fixed binary layouts with static size checks, such as 128-byte KGRAM headers or 512-byte KLLIB cell records.</p>
+<h3>Baseline Accuracy</h3>
+<p>Accuracy expected from raw symbol frequency without grammar structure.</p>
+<h3>Block-Boundary Null</h3>
+<p>A null model that disrupts block-level sequence boundaries to test whether observed grammar coupling depends on real order.</p>
+<h3>CoNLL-U</h3>
+<p>A tabular format used by Universal Dependencies corpora. KALYX reads CoNLL-U for language experiments.</p>
+<h3>FASTA</h3>
+<p>A common biological sequence file format. KALYX reads chromosome FASTA files for genome experiments.</p>
+<h3>FNV1a</h3>
+<p>A deterministic non-cryptographic hash used by KALYX for symbol and artifact hashing.</p>
+<h3>KALYX</h3>
+<p>The full system: a substrate architecture for converting ordered data into KDNA/KGRAM/KFIELD artifacts and libraries.</p>
+<h3>KDNA</h3>
+<p>The projected representation used by KALYX. Raw symbols are mapped into KDNA symbols before grammar induction.</p>
+<h3>KFIELD</h3>
+<p>A self/cross measurement field. Rows are streams; columns are grammars. Each cell measures how well a grammar explains a stream.</p>
+<h3>KGENOME</h3>
+<p>Genome-specific KFIELD matrix format. Stores chromosome self/cross metrics.</p>
+<h3>KGLIB001</h3>
+<p>Enterprise genome library artifact. Indexes chromosome streams, grammars, matrices, hashes, and file metadata.</p>
+<h3>KGRAM01</h3>
+<p>Fixed ABI transition grammar extracted from adjacent KDNA transitions.</p>
+<h3>KLANG</h3>
+<p>Language application layer inside KALYX. Converts CoNLL-U linguistic streams into KDNA/KGRAM/KFIELD experiments.</p>
+<h3>KLLIB001</h3>
+<p>Enterprise language library artifact. Indexes KLANG suite results, cell metrics, null models, report hashes, and language grammar metadata.</p>
+<h3>KSTREAM1</h3>
+<p>Generic stream summary format. Describes symbol streams from bytes, tokens, CSV, CoNLL-U, or future adapters.</p>
+<h3>Lift</h3>
+<p>Difference between grammar accuracy and baseline accuracy.</p>
+<pre><code class="language-text">lift = kgram_accuracy - baseline_accuracy
+</code></pre>
+<h3>Null Model</h3>
+<p>A controlled corruption or transformation used to test whether observed structure depends on real order.</p>
+<h3>Observed Minus Null</h3>
+<p>Difference between observed grammar accuracy and average null-model accuracy.</p>
+<pre><code class="language-text">observed_minus_null = observed_accuracy - avg_null_accuracy
+</code></pre>
+<h3>Out of Grammar</h3>
+<p>Number of test transitions not found in a grammar.</p>
+<h3>Surprise Rate</h3>
+<p>Fraction of test transitions outside the grammar.</p>
+<h3>UPOS</h3>
+<p>Universal part-of-speech tag from Universal Dependencies.</p>
+<h3>UPOS w2</h3>
+<p>A window of two adjacent UPOS tags. This is the main local POS transition test used in KLANG.</p>
+<h3>UPOS w3</h3>
+<p>A window of three adjacent UPOS tags. This is a harder local syntax test.</p>
+<h3>UPOS+DEPREL</h3>
+<p>A combined linguistic symbol using universal POS and dependency relation.</p>
+<hr>
+<h2>License</h2>
+<p>Copyright © Ralf Krümmel.</p>
+<p>Licensed under the <strong>Apache License, Version 2.0</strong>. You may obtain a copy of the License at:</p>
+<pre><code class="language-text">https://www.apache.org/licenses/LICENSE-2.0
+</code></pre>
+<p>Unless required by applicable law or agreed to in writing, software distributed under the Apache License is distributed on an <strong>&quot;AS IS&quot; BASIS</strong>, without warranties or conditions of any kind.</p>
+</main>
+</body>
+</html>

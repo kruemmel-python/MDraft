@@ -1,0 +1,20 @@
+MDraft v0.9.4 - File workflow fix
+
+Fixes:
+- Datei -> Neu restored
+- Datei -> Öffnen... restored
+- Datei -> Speichern unter... restored
+- Ctrl+N and Ctrl+O restored
+- Ctrl+S on an unnamed/default document now opens Save As instead of trying examples/demo.md
+- Save failure now offers Save As instead of only showing an error box
+- Win32 file dialogs restored through <commdlg.h> and comdlg32 linkage
+- Direct make gui path links -lcomdlg32
+- RenderIR preview remains unchanged and active via Ansicht -> RenderIR/HTML Live-Vorschau anzeigen / Ctrl+P
+
+Reason:
+The v0.9.x RenderIR branch had regressed the file workflow commands while preserving only Save/Export.
+The installed app had no writable examples/demo.md directory, so Save attempted examples/demo.md.tmp and failed with win32_error=3.
+
+Tests:
+make clean
+make test

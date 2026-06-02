@@ -1,0 +1,21 @@
+MDraft v0.10.1 - Multi-Datei-Suche
+
+Substrat:
+- workspace library with FileIndex, MarkdownSymbols, LinkResolver, Diagnostics and WorkspaceSearch.
+- Recursive workspace scan over markdown/text files.
+- Stable FNV-1a content hash per file.
+- Heading symbols and markdown links are indexed.
+- Multi-file search reads indexed files and returns file:line:column plus snippet.
+
+UI:
+- Projekt -> Workspace öffnen...
+- Projekt -> Workspace neu indizieren
+- Projekt -> Workspace suchen... (Ctrl+Shift+F)
+- Projekt -> Workspace-Status
+
+Search query source:
+- active selection if present
+- otherwise word under cursor
+- if no workspace is active, Workspace suchen asks for a folder first.
+
+No external libraries.
