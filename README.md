@@ -111,7 +111,7 @@ Der Workspace-Test prüft Indexing, Symbols, Links, Search, Symbol Navigation, L
 - [`ARCHITECTURE.md`](ARCHITECTURE.md)
 - [`USER_GUIDE.md`](USER_GUIDE.md)
 - [`FEATURE_MATRIX.md`](FEATURE_MATRIX.md)
-- [`CHANGELOG.md`](CHANGELOG.md)
+
 
 ## Entwicklungsprinzip
 
