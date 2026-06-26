@@ -173,7 +173,7 @@ bool EditorRuntime::execute(CommandID id, bool& running) {
       return true;
 
     case CommandID::About:
-      mark_status("MDraft v0.10.3 - link validation and image suggestions substrate");
+      mark_status("MDraft v0.12.3 - native workspace editor");
       return true;
 
     case CommandID::Copy:

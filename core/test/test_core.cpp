@@ -4,6 +4,9 @@
 #include "mtx/html.hpp"
 #include "mtx/layout_engine.hpp"
 #include "mtx/render_svg.hpp"
+#ifdef NDEBUG
+#undef NDEBUG
+#endif
 #include <cassert>
 #include <iostream>
 #include <stdexcept>

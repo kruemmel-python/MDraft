@@ -1,0 +1,42 @@
+# Build outputs
+/build/
+/build_*/
+/out/
+/_CPack_Packages/
+
+# CMake/MSBuild generated files
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+CTestTestfile.cmake
+Testing/
+*.sln
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+*.tlog
+*.recipe
+*.lastbuildstate
+
+# Binaries and packages
+*.exe
+*.dll
+*.lib
+*.obj
+*.pdb
+*.ilk
+*.msi
+*.wixpdb
+*.wixobj
+
+# Local/editor files
+.vs/
+.vscode/
+.idea/
+*.user
+*.log
+*.tmp
+
+# OS files
+Thumbs.db
+Desktop.ini

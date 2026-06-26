@@ -3,625 +3,685 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>MDraft Export</title>
+<title>MDraft RenderIR Export</title>
 <style>
-:root{color-scheme:light;--fg:#24292f;--muted:#57606a;--border:#d0d7de;--bg:#ffffff;--soft:#f6f8fa;--accent:#0969da;}
-body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;}
-.markdown-body{box-sizing:border-box;max-width:980px;margin:32px auto;padding:0 32px;}
-h1,h2,h3,h4,h5,h6{margin:24px 0 16px;font-weight:600;line-height:1.25;}
-h1{font-size:2em;border-bottom:1px solid var(--border);padding-bottom:.3em;}h2{font-size:1.5em;border-bottom:1px solid var(--border);padding-bottom:.3em;}h3{font-size:1.25em;}
-p{margin:0 0 16px;}a{color:var(--accent);}blockquote{margin:0 0 16px;padding:0 1em;color:var(--muted);border-left:.25em solid var(--border);}
-ul,ol{margin-top:0;margin-bottom:16px;padding-left:2em;}li{margin:.25em 0;}.task-list-item{list-style-type:none;}input[type=checkbox]{margin:0 .45em .2em -1.6em;vertical-align:middle;}
-code{font-family:ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",Menlo,monospace;font-size:85%;background:rgba(175,184,193,.2);border-radius:6px;padding:.2em .4em;}
-pre{margin:0 0 16px;padding:16px;overflow:auto;background:var(--soft);border-radius:6px;}pre code{padding:0;background:transparent;font-size:100%;}
-table{border-spacing:0;border-collapse:collapse;margin:0 0 16px;width:auto;}th,td{padding:6px 13px;border:1px solid var(--border);}tr:nth-child(2n){background:var(--soft);}hr{height:.25em;padding:0;margin:24px 0;background:var(--border);border:0;}
-.math{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;color:#8250df;background:#f6f8fa;border-radius:6px;padding:.1em .3em;}.math-block{display:block;margin:0 0 16px;padding:16px;background:#f6f8fa;border-radius:6px;color:#8250df;}
+html,body{margin:0;min-height:100%;background:rgb(255,255,255);color:#eadfda;}
+body{font-family:Consolas,'Cascadia Mono','Courier New',monospace;}
+.render-root{box-sizing:border-box;min-height:100vh;padding:40px;background:#ffffff;}
+.render-frame{display:block;margin:0 auto;max-width:calc(100vw - 32px);height:auto;}
 </style>
 </head>
-<body>
-<main class="markdown-body">
-<h1>CodeDumper</h1>
-<p><strong>Enterprise-grade local code dump generator for LLM-assisted code review, audits, architecture analysis, and secure repository handoff.</strong></p>
-<p>CodeDumper converts project ZIP archives into structured, LLM-ready Markdown, XML, or JSON dumps. It is designed for developers, security teams, consultants, and engineering organizations that need precise control over what code is shared with humans or large language models.</p>
-<p>The application runs locally in the browser or as a hardened Electron desktop app. No LLM call is made during dump generation. Token counts and costs are offline estimates only.</p>
-<hr>
-<h2>Why CodeDumper exists</h2>
-<p>Large language models are useful for code review, migration planning, refactoring, security analysis, and architecture understanding. However, sending an entire repository directly to an LLM is usually inefficient and risky.</p>
-<p>Typical problems include:</p>
-<ul>
-<li>oversized prompts that exceed context windows</li>
-<li>accidental inclusion of <code>node_modules</code>, build output, lockfiles, reports, generated assets, or datasets</li>
-<li>leakage of <code>.env</code> files, API keys, tokens, SSH keys, or cloud credentials</li>
-<li>prompt-injection content hidden in comments, documentation, or third-party code</li>
-<li>poor file ordering that makes the repository harder for an LLM to understand</li>
-<li>browser freezes while processing large ZIP files</li>
-<li>unsafe ZIP handling, including path traversal and decompression-bomb risks</li>
-</ul>
-<p>CodeDumper solves these problems by producing curated, filtered, token-aware, security-scanned code dumps.</p>
-<hr>
-<h2>Core capabilities</h2>
-<h3>LLM Code Review Mode</h3>
-<p>The default enterprise workflow is <strong>LLM Code Review Mode</strong>. It is language-agnostic and optimized for repositories of many technology stacks, not only React or JavaScript.</p>
-<p>It prioritizes:</p>
-<ul>
-<li>source code</li>
-<li>tests</li>
-<li>manifests</li>
-<li>runtime and build configuration</li>
-<li>architecture documentation</li>
-<li>security boundaries</li>
-<li>framework entry points</li>
-</ul>
-<p>It automatically removes or deprioritizes:</p>
-<ul>
-<li>dependency directories</li>
-<li>lockfiles</li>
-<li>build artifacts</li>
-<li>release packages</li>
-<li>reports</li>
-<li>generated data</li>
-<li>vendored code</li>
-<li>minified bundles</li>
-<li>sourcemaps</li>
-<li>logs</li>
-<li>binaries</li>
-<li>local secret files</li>
-</ul>
-<p>Supported ecosystems include, among others:</p>
-<ul>
-<li>JavaScript / TypeScript / React / Vue / Svelte / Astro / Node.js</li>
-<li>Python / FastAPI / Django / Flask / Streamlit</li>
-<li>Rust</li>
-<li>Go</li>
-<li>Java / Kotlin / Scala</li>
-<li>.NET / C#</li>
-<li>C / C++</li>
-<li>Swift</li>
-<li>PHP</li>
-<li>Ruby</li>
-<li>Dart</li>
-<li>Elixir / Erlang</li>
-<li>Clojure</li>
-<li>Haskell / OCaml</li>
-</ul>
-<hr>
-<h2>Feature overview</h2>
-<h3>Local ZIP inspection</h3>
-<p>CodeDumper inspects uploaded ZIP archives locally. It reads the archive structure, builds a file tree, applies safety limits, and lets the user select or exclude files before generating a dump.</p>
-<h3>Interactive file tree</h3>
-<p>A visual tree selector provides fine-grained control over included and excluded files. Directory selections cascade to children, allowing fast cleanup of large repositories.</p>
-<h3>Native ignore-file support</h3>
-<p>CodeDumper automatically detects and applies ignore rules from:</p>
-<ul>
-<li><code>.gitignore</code></li>
-<li><code>.dockerignore</code></li>
-</ul>
-<p>Negated ignore rules using <code>!pattern</code> are supported.</p>
-<h3>Smart stack detection</h3>
-<p>The scanner detects common project types from repository files and applies appropriate filtering logic. Examples:</p>
-<ul>
-<li><code>package.json</code> + Vite config → Node / Vite / frontend project</li>
-<li><code>pyproject.toml</code> or <code>requirements.txt</code> → Python project</li>
-<li><code>Cargo.toml</code> → Rust crate</li>
-<li><code>pom.xml</code> → Java / Maven project</li>
-<li><code>.csproj</code> or <code>.sln</code> → .NET project</li>
-</ul>
-<h3>Repository map generation</h3>
-<p>Generated dumps include a repository map at the top. This gives humans and LLMs an immediate overview of the included project structure before the file contents begin.</p>
-<h3>Local LLM Panel for LM Studio, Ollama and OpenAI-compatible local servers</h3>
-<p>The web UI includes a visible <strong>Local LLM Panel</strong> in the output area after a dump has been generated.</p>
-<p>Typical LM Studio workflow:</p>
-<ol>
-<li>Start LM Studio.</li>
-<li>Load and start a local model.</li>
-<li>Enable the local server in LM Studio.</li>
-<li>In CodeDumper, open the <strong>Local LLM Panel</strong>.</li>
-<li>Select <strong>OpenAI-compatible / LM Studio</strong>.</li>
-<li>Set the API endpoint to:</li>
-</ol>
-<pre><code class="language-text">http://localhost:1234/v1/chat/completions
-</code></pre>
-<ol>
-<li>Click <strong>Load models</strong> or enter the running model name manually.</li>
-<li>Review or customize the system prompt and review prompt.</li>
-<li>Click <strong>Send dump to Local LLM</strong>.</li>
-</ol>
-<p>For Ollama, use one of these endpoints:</p>
-<pre><code class="language-text">http://localhost:11434/api/chat
-http://localhost:11434/api/generate
-</code></pre>
-<p>The panel supports streaming responses and keeps the workflow local as long as the configured endpoint points to <code>localhost</code>, <code>127.0.0.1</code>, or another trusted internal server.</p>
-<h3>Token counting and cost estimation</h3>
-<p>CodeDumper estimates token usage and optional API cost before export.</p>
-<p>The UI explicitly states that no LLM/API call was made. Token and cost values are offline estimates intended for planning context-window and API-budget usage.</p>
-<h3>Multiple export formats</h3>
-<p>Supported output formats:</p>
-<ul>
-<li>Markdown</li>
-<li>XML</li>
-<li>JSON</li>
-</ul>
-<p>Markdown is suitable for general LLM workflows. XML and JSON are useful for structured prompting pipelines and automated processing.</p>
-<h3>Chunked export</h3>
-<p>Large repositories can be split into multiple output parts using a configurable token limit per file. This helps fit dumps into smaller context windows.</p>
-<h3>Semantic chunking</h3>
-<p>Instead of splitting files purely linearly, CodeDumper can group related files together. It prefers keeping files from the same directory, matching base names, and test/spec companions in the same chunk where possible.</p>
-<p>Example:</p>
-<pre><code class="language-text">Button.tsx
-Button.test.tsx
-Button.css
-</code></pre>
-<p>are more likely to stay together in the same export part.</p>
-<h3>Diff / Review Focus Mode</h3>
-<p>For pull-request-style workflows, CodeDumper can focus the dump on changed files and nearby companions.</p>
-<p>Users may provide:</p>
-<ul>
-<li>a comma-separated list of changed paths</li>
-<li>newline-separated changed paths</li>
-<li>unified diff headers</li>
-<li>uploaded <code>.diff</code> or <code>.patch</code> files</li>
-</ul>
-<p>The dump is then narrowed to the most relevant review files plus related tests or companions.</p>
-<h3>Code condensation</h3>
-<p>Optional code condensation reduces token footprint by removing low-value whitespace and comments. This is useful when repository size is more important than preserving every comment.</p>
-<p>Because comments can contain architectural or security context, this feature is optional.</p>
-<h3>Syntax-aware condensation and skeleton mode</h3>
-<p>CodeDumper includes a safer condensation path that avoids destructive regex-based comment stripping for supported workflows. It can preserve code structure while reducing prompt size.</p>
-<p>The optional skeleton mode extracts compact structural context such as:</p>
-<ul>
-<li>classes</li>
-<li>functions</li>
-<li>exported symbols</li>
-<li>interfaces and types</li>
-<li>route or module boundaries where detectable</li>
-</ul>
-<p>This is useful when a model needs architectural context without every implementation detail.</p>
-<h3>Token and file explorer</h3>
-<p>The output view includes a token/file explorer that helps identify which folders or files dominate the generated context.</p>
-<p>This makes it easier to remove accidental high-token areas such as:</p>
-<ul>
-<li>fixtures</li>
-<li>generated assets</li>
-<li>large JSON files</li>
-<li>reports</li>
-<li>vendored code</li>
-<li>test snapshots</li>
-</ul>
-<p>Large token contributors can be excluded directly from the explorer workflow.</p>
-<h3>Virtualized preview</h3>
-<p>Large generated dumps are previewed with a virtualized read-only output view to avoid UI freezes caused by very large textareas.</p>
-<h3>Web Worker processing</h3>
-<p>ZIP processing, decoding, filtering, scanning, token counting, and dump assembly run inside a Web Worker. The React UI remains responsive and the job can be cancelled.</p>
-<h3>Push to Local LLM</h3>
-<p>CodeDumper can optionally send the generated dump to a local LLM-compatible endpoint such as Ollama or LM Studio.</p>
-<p>This keeps the workflow local-first while removing the need to copy very large Markdown blocks manually.</p>
-<p>Typical local endpoints include:</p>
-<pre><code class="language-text">http://localhost:11434
-http://127.0.0.1:1234
-</code></pre>
-<p>This feature is explicitly intended for local/private model workflows. It is separate from the default dump generation flow, which still performs no LLM/API call.</p>
-<h3>LM Studio browser compatibility</h3>
-<p>When the Web UI talks to LM Studio from <code>http://localhost:3000</code>, the browser may perform a CORS preflight for JSON <code>POST</code> requests. PowerShell or curl can succeed while the browser fails because they do not enforce CORS.</p>
-<p>CodeDumper therefore tries two transports for OpenAI-compatible LM Studio endpoints:</p>
-<ol>
-<li>standard <code>application/json</code> streaming request</li>
-<li>no-preflight <code>text/plain;charset=UTF-8</code> JSON request for LM Studio/browser compatibility</li>
-</ol>
-<p>Use the LM Studio base URL, for example:</p>
-<pre><code class="language-text">http://192.168.178.62:1234
-</code></pre>
-<p>CodeDumper resolves it internally to:</p>
-<pre><code class="language-text">http://192.168.178.62:1234/v1/chat/completions
-</code></pre>
-<p>Keep <strong>CORS aktivieren</strong> and <strong>Im lokalen Netzwerk bereitstellen</strong> enabled in LM Studio, then restart the local server.</p>
-<h3>Custom enterprise rules</h3>
-<p>Organizations can define custom security and prompt-injection rules as JSON. This allows teams to detect internal credential formats, proprietary token prefixes, or organization-specific LLM manipulation patterns.</p>
-<p>Example rule use cases:</p>
-<ul>
-<li><code>CORP_API_TKN_*</code></li>
-<li>internal bearer-token formats</li>
-<li>customer-specific environment variable names</li>
-<li>prohibited prompt-injection phrases</li>
-<li>compliance-specific redaction markers</li>
-</ul>
-<hr>
-<h2>Security features</h2>
-<p>CodeDumper is built for workflows where the output may later be shared with an LLM, reviewer, vendor, or customer. Security checks are therefore part of the core pipeline.</p>
-<h3>No API key leakage</h3>
-<p>The frontend does not embed server-side API keys. There is no static injection of environment secrets into the browser bundle.</p>
-<h3>No LLM call during generation</h3>
-<p>CodeDumper does not send project contents to OpenAI, Anthropic, Google, or any other model provider during dump creation. All processing is local.</p>
-<h3>Secret and credential scanning</h3>
-<p>CodeDumper scans decoded text for common sensitive values and redacts them before export.</p>
-<p>Detection includes:</p>
-<ul>
-<li>AWS access keys</li>
-<li>OpenAI-style keys</li>
-<li>GitHub tokens</li>
-<li>Google API keys</li>
-<li>private key blocks</li>
-<li>bearer tokens</li>
-<li>generic secret assignments</li>
-<li>high-entropy token-like strings</li>
-</ul>
-<p>Redactions are reported in the UI warning panel.</p>
-<h3>Shannon-entropy detection</h3>
-<p>In addition to fixed regex rules, CodeDumper can flag high-entropy Base64-, hex-, and token-like strings. This helps catch custom credentials and organization-specific secrets that do not match standard patterns.</p>
-<h3>Prompt-injection detection</h3>
-<p>CodeDumper scans files for common indirect prompt-injection phrases, such as attempts to override system instructions or manipulate downstream LLM behavior.</p>
-<p>Possible actions:</p>
-<ul>
-<li>warn</li>
-<li>redact</li>
-<li>skip affected file</li>
-</ul>
-<p>This is useful when analyzing third-party repositories or untrusted ZIP archives.</p>
-<h3>Zip Slip protection</h3>
-<p>Archive paths are normalized and sanitized before they are displayed or exported. Absolute paths, traversal segments, and unsafe path forms are removed or rejected.</p>
-<h3>ZIP bomb and decompression protection</h3>
-<p>CodeDumper applies layered protections:</p>
-<ul>
-<li>archive-level size limits</li>
-<li>per-file size limits</li>
-<li>file-count limits</li>
-<li>path-length limits</li>
-<li>compression-ratio checks</li>
-<li>guarded extraction</li>
-<li>running byte counters</li>
-<li>Worker watchdog termination</li>
-</ul>
-<p>Selected extraction paths use guarded streaming via <code>fflate</code> to reduce memory-exhaustion risk compared with buffering entire files blindly.</p>
-<h3>Glob ReDoS protection</h3>
-<p>User-provided include and exclude patterns are validated and bounded to reduce regular-expression denial-of-service risks caused by pathological glob patterns.</p>
-<h3>Hardened Electron configuration</h3>
-<p>The Electron build is configured with a hardened browser environment:</p>
-<ul>
-<li><code>nodeIntegration: false</code></li>
-<li><code>contextIsolation: true</code></li>
-<li><code>sandbox: true</code></li>
-<li><code>webSecurity: true</code></li>
-<li>denied permission requests</li>
-<li>navigation restrictions</li>
-<li>external window restrictions</li>
-<li>Content Security Policy headers</li>
-</ul>
-<h3>ReDoS hardening</h3>
-<p>CodeDumper validates custom glob and regex-like rule inputs, applies scan limits, and avoids unbounded high-risk text scans where possible. Long lines and minified files are constrained before sensitive pattern matching is performed.</p>
-<h3>Encoding and obfuscation hardening</h3>
-<p>Before prompt-injection and secret checks, text can be normalized using Unicode NFKC. This reduces bypasses based on unusual Unicode forms.</p>
-<p>The scanner also performs heuristic checks for suspicious Base64-encoded strings and scans decoded candidates for secrets or prompt-injection phrases.</p>
-<h3>Symlink and nested-archive protection</h3>
-<p>ZIP symlink entries are dropped to avoid unsafe path semantics in browser, desktop, and CLI workflows.</p>
-<p>Nested ZIP-like files are detected through magic bytes and treated as non-recursive archive payloads. CodeDumper does not recursively unpack archive-in-archive content by default.</p>
-<hr>
-<h2>Architecture</h2>
-<p>CodeDumper is structured around a browser-first React frontend and a processing core that can be reused by desktop and CLI workflows.</p>
-<pre><code class="language-text">.
-├── src/
-│   ├── components/          # UI components
-│   ├── services/            # ZIP processing, filtering, tokenization, scanning
-│   ├── workers/             # Web Worker entry points
-│   └── App.tsx              # Main application shell
-├── electron/                # Hardened Electron main/preload code
-├── cli/                     # Headless CLI entry point
-├── .github/actions/         # GitHub Action definition
-├── .github/workflows/       # CI example workflow
-├── package.json
-├── vite.config.ts
-└── tsconfig.json
-</code></pre>
-<p>The core pipeline is approximately:</p>
-<pre><code class="language-text">ZIP upload
-  → archive inspection
-  → path normalization
-  → ignore-rule loading
-  → stack detection
-  → file tree selection
-  → LLM Code Review filtering
-  → guarded extraction
-  → text decoding
-  → Unicode normalization
-  → secret scanning
-  → high-entropy scanning
-  → prompt-injection scanning
-  → custom enterprise rules
-  → optional condensation / skeletonization
-  → token estimation
-  → semantic chunking
-  → Markdown/XML/JSON composition
-  → token explorer / preview / download / local LLM handoff
-</code></pre>
-<hr>
-<h2>Installation</h2>
-<h3>Requirements</h3>
-<ul>
-<li>Node.js 20 LTS recommended</li>
-<li>npm 10+</li>
-<li>Windows, macOS, or Linux</li>
-</ul>
-<p>Electron installation requires access to Electron release downloads during normal package installation.</p>
-<h3>Install dependencies</h3>
-<pre><code class="language-bash">npm install
-</code></pre>
-<p>If package installation fails because of environment-specific Electron download restrictions, web-only verification can be performed with:</p>
-<pre><code class="language-bash">npm install --ignore-scripts
-</code></pre>
-<hr>
-<h2>Development</h2>
-<h3>Start the web app</h3>
-<pre><code class="language-bash">npm run dev
-</code></pre>
-<h3>Build the web app</h3>
-<pre><code class="language-bash">npm run build:web
-</code></pre>
-<h3>Type-check</h3>
-<pre><code class="language-bash">npx tsc --noEmit
-</code></pre>
-<h3>Start Electron development mode</h3>
-<pre><code class="language-bash">npm run electron:dev
-</code></pre>
-<h3>Build desktop package</h3>
-<pre><code class="language-bash">npm run electron:build
-</code></pre>
-<hr>
-<h2>CLI usage</h2>
-<p>CodeDumper includes a headless CLI for automation and CI pipelines.</p>
-<p>Basic usage:</p>
-<pre><code class="language-bash">npm run cli -- project.zip codedump.md
-</code></pre>
-<p>With token chunking:</p>
-<pre><code class="language-bash">npm run cli -- project.zip codedump.md --max-tokens 120000
-</code></pre>
-<p>With review focus paths:</p>
-<pre><code class="language-bash">npm run cli -- project.zip codedump.md --focus src/auth.ts,src/auth.test.ts
-</code></pre>
-<p>With a newline-separated or diff-derived focus list:</p>
-<pre><code class="language-bash">npm run cli -- project.zip codedump.md --focus-file changed-files.txt
-</code></pre>
-<p>With a patch file:</p>
-<pre><code class="language-bash">npm run cli -- project.zip codedump.md --focus-from-patch pr-123.patch
-</code></pre>
-<p>With custom enterprise rules:</p>
-<pre><code class="language-bash">npm run cli -- project.zip codedump.md --custom-rules rules.json
-</code></pre>
-<p>With skeleton condensation:</p>
-<pre><code class="language-bash">npm run cli -- project.zip codedump.md --ast-mode skeleton
-</code></pre>
-<p>Recommended CI mode:</p>
-<pre><code class="language-bash">npm run cli -- repository.zip codedump.md --llm-code-review --semantic-chunking --scan-secrets --scan-prompt-injection
-</code></pre>
-<hr>
-<h2>GitHub Action usage</h2>
-<p>The repository includes a local GitHub Action and workflow template for producing LLM-ready review artifacts in CI.</p>
-<p>Example workflow behavior:</p>
-<ol>
-<li>checkout repository</li>
-<li>package repository as ZIP</li>
-<li>run CodeDumper CLI</li>
-<li>upload generated dump as workflow artifact</li>
-</ol>
-<p>Typical usage:</p>
-<pre><code class="language-yaml">name: CodeDump Review Artifact
-
-on:
-  pull_request:
-  workflow_dispatch:
-
-jobs:
-  codedump:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - run: npm ci
-
-      - run: zip -r repository.zip . -x &quot;node_modules/*&quot; &quot;dist/*&quot; &quot;.git/*&quot;
-
-      - run: npm run cli -- repository.zip codedump.md --llm-code-review --max-tokens 120000
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: llm-code-review-dump
-          path: codedump.md
-</code></pre>
-<hr>
-<h3>LM Studio on localhost or LAN</h3>
-<p>The Local LLM Panel accepts either a server base URL or a full chat-completions endpoint.</p>
-<p>Examples:</p>
-<pre><code class="language-text">http://localhost:1234
-http://localhost:1234/v1/chat/completions
-http://192.168.178.62:1234
-http://192.168.178.62:1234/v1/chat/completions
-</code></pre>
-<p>For LM Studio:</p>
-<ol>
-<li>Start the LM Studio local server.</li>
-<li>Load a model in LM Studio.</li>
-<li>Enable LAN access / bind to all interfaces if CodeDumper runs on another device.</li>
-<li>Allow port <code>1234</code> in the firewall.</li>
-<li>In CodeDumper, choose <strong>OpenAI-compatible / LM Studio</strong>.</li>
-<li>Click <strong>Load models</strong> or enter the exact running model name manually.</li>
-<li>Send the dump.</li>
-</ol>
-<p>If the browser shows <code>Failed to fetch</code>, the problem is usually one of these:</p>
-<ul>
-<li>the LM Studio server is not running</li>
-<li>the URL is missing the correct host or port</li>
-<li>the server is bound only to <code>localhost</code>, but CodeDumper is using a LAN IP</li>
-<li>the firewall blocks port <code>1234</code></li>
-<li>the server rejects browser CORS requests</li>
-</ul>
-<p>A quick check is to open this URL directly in the browser:</p>
-<pre><code class="language-text">http://192.168.178.62:1234/v1/models
-</code></pre>
-<p>If that works in a browser tab but the panel still cannot fetch it, use the Electron app or enable CORS support in the local server.</p>
-<hr>
-<h2>Recommended LLM workflow</h2>
-<p>For a full repository review:</p>
-<ol>
-<li>Enable <strong>LLM Code Review Mode</strong>.</li>
-<li>Keep secret scanning enabled.</li>
-<li>Keep prompt-injection scanning enabled for untrusted repositories.</li>
-<li>Exclude generated data, reports, binaries, and lockfiles.</li>
-<li>Use semantic chunking when the output exceeds the target model context window.</li>
-<li>Review warnings before sending any dump to an external system.</li>
-</ol>
-<p>For pull-request review:</p>
-<ol>
-<li>Enable <strong>Diff / Review Focus Mode</strong>.</li>
-<li>Provide changed file paths or a unified diff.</li>
-<li>Include nearby tests and companions.</li>
-<li>Generate a compact review dump.</li>
-<li>Send only the focused dump to the LLM.</li>
-</ol>
-<hr>
-<h2>What should not be included in an LLM code dump</h2>
-<p>CodeDumper is intentionally aggressive about excluding low-value or risky material.</p>
-<p>Usually exclude:</p>
-<pre><code class="language-text">node_modules/**
-dist/**
-build/**
-release/**
-coverage/**
-reports/**
-data/**
-.git/**
-*.lock
-package-lock.json
-yarn.lock
-pnpm-lock.yaml
-*.map
-*.log
-*.min.js
-*.pem
-*.key
-.env
-.env.*
-</code></pre>
-<p>Usually include:</p>
-<pre><code class="language-text">src/**
-app/**
-lib/**
-server/**
-client/**
-components/**
-services/**
-routes/**
-controllers/**
-models/**
-tests/**
-__tests__/**
-*.test.*
-*.spec.*
-package.json
-pyproject.toml
-requirements.txt
-Cargo.toml
-go.mod
-pom.xml
-build.gradle
-*.csproj
-*.sln
-README.md
-ARCHITECTURE.md
-SECURITY.md
-</code></pre>
-<hr>
-<h2>Privacy model</h2>
-<p>CodeDumper is a local processing tool. By design:</p>
-<ul>
-<li>uploaded ZIP files are processed locally</li>
-<li>no LLM provider is contacted</li>
-<li>no project data is uploaded by the app during dump generation</li>
-<li>token and cost estimates are calculated offline</li>
-<li>users remain responsible for where they later paste, upload, or send the generated dump</li>
-</ul>
-<hr>
-<h2>Limitations</h2>
-<p>CodeDumper reduces risk, but it cannot guarantee that every sensitive value or malicious instruction will be detected.</p>
-<p>Known limitations:</p>
-<ul>
-<li>entropy scanning can produce false positives</li>
-<li>prompt-injection phrase matching can miss novel attacks</li>
-<li>entropy scanning can redact harmless high-randomness identifiers</li>
-<li>prompt-injection phrase matching can miss novel attacks</li>
-<li>code condensation may remove comments that are semantically useful</li>
-<li>skeleton mode is structural and may omit implementation details required for deep debugging</li>
-<li>semantic chunking is heuristic and not a full dependency graph for every language</li>
-<li>local LLM handoff depends on the local model server and its context-window limits</li>
-<li>archive parsing is hardened but adversarial file formats are inherently risky</li>
-<li>generated dumps should still be reviewed before being shared externally</li>
-</ul>
-<hr>
-<h2>Enterprise hardening checklist</h2>
-<p>Before using CodeDumper in a regulated or high-sensitivity environment:</p>
-<ul>
-<li>run dependency audit in your own supply-chain environment</li>
-<li>pin Node.js and npm versions in CI</li>
-<li>review Electron build and signing configuration</li>
-<li>enforce internal allowlists for export destinations</li>
-<li>keep secret scanning enabled by default</li>
-<li>keep prompt-injection scanning enabled for third-party code</li>
-<li>set conservative token and size limits</li>
-<li>store generated dumps as sensitive artifacts</li>
-<li>avoid sending proprietary code to external LLM providers unless approved by policy</li>
-</ul>
-<hr>
-<h2>Scripts</h2>
-<p>Common scripts:</p>
-<pre><code class="language-bash">npm run dev
-npm run build:web
-npm run electron:dev
-npm run electron:build
-npm run cli -- project.zip codedump.md
-npx tsc --noEmit
-</code></pre>
-<hr>
-<h2>Technology stack</h2>
-<ul>
-<li>React</li>
-<li>TypeScript</li>
-<li>Vite</li>
-<li>Electron</li>
-<li>Web Workers</li>
-<li><code>fflate</code></li>
-<li><code>js-tiktoken</code></li>
-<li><code>minimatch</code></li>
-<li>Tailwind CSS</li>
-<li>local LLM compatible HTTP APIs</li>
-</ul>
-<hr>
-<h2>Roadmap</h2>
-<p>Potential next improvements:</p>
-<ul>
-<li>full AST-based condensation using Tree-sitter</li>
-<li>language-specific dependency graph extraction</li>
-<li>SARIF export for security findings</li>
-<li>policy profiles for regulated environments</li>
-<li>organization-wide ignore-rule templates</li>
-<li>signed desktop releases</li>
-<li>deterministic dump manifests and checksums</li>
-<li>full Tree-sitter WASM grammar integration for more languages</li>
-<li>language-specific dependency graph extraction</li>
-<li>SARIF export for security findings</li>
-<li>policy profiles for regulated environments</li>
-<li>organization-wide ignore-rule templates</li>
-<li>signed desktop releases</li>
-<li>deterministic dump manifests and checksums</li>
-<li>optional local-only embedding index for repository navigation</li>
-</ul>
-<hr>
-<h2>License</h2>
-<p>Add your license here, for example:</p>
-<pre><code class="language-text">MIT License
-</code></pre>
-<hr>
-<h2>Project status</h2>
-<p>CodeDumper is designed as a professional local-first tool for secure, token-aware, LLM-ready repository export. It is suitable for developer workflows, internal review automation, and enterprise evaluation, provided that generated artifacts are handled according to the organization’s data-protection policies.</p>
+<body class="theme-standard">
+<main class="render-root">
+<svg class="render-frame" xmlns="http://www.w3.org/2000/svg" width="760" height="19646" viewBox="0 0 760 19646" role="img" aria-label="MDraft RenderIR Export">
+<rect x="0" y="0" width="760" height="19646" fill="rgb(255,255,255)" stroke="rgb(208,215,222)" stroke-width="1"/>
+<rect x="0" y="0" width="760" height="32" fill="rgb(255,255,255)"/>
+<rect x="0" y="24" width="760" height="1" fill="rgb(208,215,222)"/>
+<text x="22" y="66" fill="rgb(255,241,238)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="24" font-weight="700">CodeDumper</text>
+<line x1="22" y1="76" x2="738" y2="76" stroke="rgb(208,215,222)" stroke-width="1"/>
+<text x="22" y="114" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">Enterprise-grade local code dump generator for LLM-assisted code</text>
+<text x="22" y="138" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">review, audits, architecture analysis, and secure repository handoff.</text>
+<text x="22" y="176" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">CodeDumper converts project ZIP archives into structured, LLM-ready</text>
+<text x="22" y="200" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">Markdown, XML, or JSON dumps. It is designed for developers, security</text>
+<text x="22" y="224" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">teams, consultants, and engineering organizations that need precise</text>
+<text x="22" y="248" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">control over what code is shared with humans or large language models.</text>
+<text x="22" y="286" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">The application runs locally in the browser or as a hardened Electron</text>
+<text x="22" y="310" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">desktop app. No LLM call is made during dump generation. Token counts</text>
+<text x="22" y="334" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">and costs are offline estimates only.</text>
+<line x1="22" y1="364" x2="738" y2="364" stroke="rgb(208,215,222)" stroke-width="1"/>
+<text x="22" y="406" fill="rgb(255,232,226)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="20" font-weight="700">Why CodeDumper exists</text>
+<line x1="22" y1="416" x2="738" y2="416" stroke="rgb(208,215,222)" stroke-width="1"/>
+<text x="22" y="452" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">Large language models are useful for code review, migration planning,</text>
+<text x="22" y="476" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">refactoring, security analysis, and architecture understanding.</text>
+<text x="22" y="500" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">However, sending an entire repository directly to an LLM is usually</text>
+<text x="22" y="524" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">inefficient and risky.</text>
+<text x="22" y="562" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">Typical problems include:</text>
+<text x="40" y="600" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• oversized prompts that exceed context windows</text>
+<text x="40" y="632" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• accidental inclusion of node_modules, build output, lockfiles,</text>
+<text x="40" y="656" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">reports, generated assets, or datasets</text>
+<text x="40" y="688" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• leakage of .env files, API keys, tokens, SSH keys, or cloud</text>
+<text x="40" y="712" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">credentials</text>
+<text x="40" y="744" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• prompt-injection content hidden in comments, documentation, or</text>
+<text x="40" y="768" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">third-party code</text>
+<text x="40" y="800" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• poor file ordering that makes the repository harder for an LLM to</text>
+<text x="40" y="824" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">understand</text>
+<text x="40" y="856" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• browser freezes while processing large ZIP files</text>
+<text x="40" y="888" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• unsafe ZIP handling, including path traversal and</text>
+<text x="40" y="912" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">decompression-bomb risks</text>
+<text x="22" y="950" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">CodeDumper solves these problems by producing curated, filtered,</text>
+<text x="22" y="974" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">token-aware, security-scanned code dumps.</text>
+<line x1="22" y1="1004" x2="738" y2="1004" stroke="rgb(208,215,222)" stroke-width="1"/>
+<text x="22" y="1046" fill="rgb(255,232,226)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="20" font-weight="700">Core capabilities</text>
+<line x1="22" y1="1056" x2="738" y2="1056" stroke="rgb(208,215,222)" stroke-width="1"/>
+<text x="22" y="1094" fill="rgb(255,210,210)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="18" font-weight="700">LLM Code Review Mode</text>
+<text x="22" y="1128" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">The default enterprise workflow is LLM Code Review Mode. It is</text>
+<text x="22" y="1152" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">language-agnostic and optimized for repositories of many technology</text>
+<text x="22" y="1176" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">stacks, not only React or JavaScript.</text>
+<text x="22" y="1214" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">It prioritizes:</text>
+<text x="40" y="1252" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• source code</text>
+<text x="40" y="1284" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• tests</text>
+<text x="40" y="1316" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• manifests</text>
+<text x="40" y="1348" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• runtime and build configuration</text>
+<text x="40" y="1380" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• architecture documentation</text>
+<text x="40" y="1412" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• security boundaries</text>
+<text x="40" y="1444" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• framework entry points</text>
+<text x="22" y="1482" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">It automatically removes or deprioritizes:</text>
+<text x="40" y="1520" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• dependency directories</text>
+<text x="40" y="1552" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• lockfiles</text>
+<text x="40" y="1584" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• build artifacts</text>
+<text x="40" y="1616" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• release packages</text>
+<text x="40" y="1648" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• reports</text>
+<text x="40" y="1680" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• generated data</text>
+<text x="40" y="1712" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• vendored code</text>
+<text x="40" y="1744" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• minified bundles</text>
+<text x="40" y="1776" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• sourcemaps</text>
+<text x="40" y="1808" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• logs</text>
+<text x="40" y="1840" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• binaries</text>
+<text x="40" y="1872" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• local secret files</text>
+<text x="22" y="1910" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">Supported ecosystems include, among others:</text>
+<text x="40" y="1948" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• JavaScript / TypeScript / React / Vue / Svelte / Astro / Node.js</text>
+<text x="40" y="1980" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• Python / FastAPI / Django / Flask / Streamlit</text>
+<text x="40" y="2012" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• Rust</text>
+<text x="40" y="2044" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• Go</text>
+<text x="40" y="2076" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• Java / Kotlin / Scala</text>
+<text x="40" y="2108" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• .NET / C#</text>
+<text x="40" y="2140" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• C / C++</text>
+<text x="40" y="2172" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• Swift</text>
+<text x="40" y="2204" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• PHP</text>
+<text x="40" y="2236" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• Ruby</text>
+<text x="40" y="2268" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• Dart</text>
+<text x="40" y="2300" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• Elixir / Erlang</text>
+<text x="40" y="2332" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• Clojure</text>
+<text x="40" y="2364" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• Haskell / OCaml</text>
+<line x1="22" y1="2394" x2="738" y2="2394" stroke="rgb(208,215,222)" stroke-width="1"/>
+<text x="22" y="2436" fill="rgb(255,232,226)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="20" font-weight="700">Feature overview</text>
+<line x1="22" y1="2446" x2="738" y2="2446" stroke="rgb(208,215,222)" stroke-width="1"/>
+<text x="22" y="2484" fill="rgb(255,210,210)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="18" font-weight="700">Local ZIP inspection</text>
+<text x="22" y="2518" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">CodeDumper inspects uploaded ZIP archives locally. It reads the archive</text>
+<text x="22" y="2542" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">structure, builds a file tree, applies safety limits, and lets the user</text>
+<text x="22" y="2566" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">select or exclude files before generating a dump.</text>
+<text x="22" y="2606" fill="rgb(255,210,210)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="18" font-weight="700">Interactive file tree</text>
+<text x="22" y="2640" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">A visual tree selector provides fine-grained control over included and</text>
+<text x="22" y="2664" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">excluded files. Directory selections cascade to children, allowing fast</text>
+<text x="22" y="2688" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">cleanup of large repositories.</text>
+<text x="22" y="2728" fill="rgb(255,210,210)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="18" font-weight="700">Native ignore-file support</text>
+<text x="22" y="2762" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">CodeDumper automatically detects and applies ignore rules from:</text>
+<text x="40" y="2800" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• .gitignore</text>
+<text x="40" y="2832" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• .dockerignore</text>
+<text x="22" y="2870" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">Negated ignore rules using !pattern are supported.</text>
+<text x="22" y="2910" fill="rgb(255,210,210)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="18" font-weight="700">Smart stack detection</text>
+<text x="22" y="2944" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">The scanner detects common project types from repository files and</text>
+<text x="22" y="2968" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">applies appropriate filtering logic. Examples:</text>
+<text x="40" y="3006" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• package.json + Vite config → Node / Vite / frontend project</text>
+<text x="40" y="3038" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• pyproject.toml or requirements.txt → Python project</text>
+<text x="40" y="3070" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• Cargo.toml → Rust crate</text>
+<text x="40" y="3102" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• pom.xml → Java / Maven project</text>
+<text x="40" y="3134" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• .csproj or .sln → .NET project</text>
+<text x="22" y="3174" fill="rgb(255,210,210)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="18" font-weight="700">Repository map generation</text>
+<text x="22" y="3208" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">Generated dumps include a repository map at the top. This gives humans</text>
+<text x="22" y="3232" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">and LLMs an immediate overview of the included project structure before</text>
+<text x="22" y="3256" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">the file contents begin.</text>
+<text x="22" y="3302" fill="rgb(255,210,210)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="18" font-weight="700">Local LLM Panel for LM Studio, Ollama and OpenAI-compatible local servers</text>
+<text x="22" y="3336" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">The web UI includes a visible Local LLM Panel in the output area after</text>
+<text x="22" y="3360" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">a dump has been generated.</text>
+<text x="22" y="3398" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">Typical LM Studio workflow:</text>
+<text x="22" y="3436" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">1. Start LM Studio. 2. Load and start a local model. 3. Enable the</text>
+<text x="22" y="3460" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">local server in LM Studio. 4. In CodeDumper, open the Local LLM Panel.</text>
+<text x="22" y="3484" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">5. Select OpenAI-compatible / LM Studio. 6. Set the API endpoint to:</text>
+<rect x="22" y="3506" width="716" height="34" fill="rgb(11,3,3)" stroke="rgb(208,215,222)" stroke-width="1"/>
+<text x="32" y="3528" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">http://localhost:1234/v1/chat/completions</text>
+<text x="22" y="3578" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">7. Click Load models or enter the running model name manually. 8.</text>
+<text x="22" y="3602" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">Review or customize the system prompt and review prompt. 9. Click Send</text>
+<text x="22" y="3626" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">dump to Local LLM.</text>
+<text x="22" y="3664" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">For Ollama, use one of these endpoints:</text>
+<rect x="22" y="3686" width="716" height="56" fill="rgb(11,3,3)" stroke="rgb(208,215,222)" stroke-width="1"/>
+<text x="32" y="3708" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">http://localhost:11434/api/chat</text>
+<text x="32" y="3730" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">http://localhost:11434/api/generate</text>
+<text x="22" y="3780" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">The panel supports streaming responses and keeps the workflow local as</text>
+<text x="22" y="3804" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">long as the configured endpoint points to localhost, 127.0.0.1, or</text>
+<text x="22" y="3828" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">another trusted internal server.</text>
+<text x="22" y="3868" fill="rgb(255,210,210)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="18" font-weight="700">Token counting and cost estimation</text>
+<text x="22" y="3902" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">CodeDumper estimates token usage and optional API cost before export.</text>
+<text x="22" y="3940" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">The UI explicitly states that no LLM/API call was made. Token and cost</text>
+<text x="22" y="3964" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">values are offline estimates intended for planning context-window and</text>
+<text x="22" y="3988" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">API-budget usage.</text>
+<text x="22" y="4028" fill="rgb(255,210,210)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="18" font-weight="700">Multiple export formats</text>
+<text x="22" y="4062" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">Supported output formats:</text>
+<text x="40" y="4100" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• Markdown</text>
+<text x="40" y="4132" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• XML</text>
+<text x="40" y="4164" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• JSON</text>
+<text x="22" y="4202" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">Markdown is suitable for general LLM workflows. XML and JSON are useful</text>
+<text x="22" y="4226" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">for structured prompting pipelines and automated processing.</text>
+<text x="22" y="4266" fill="rgb(255,210,210)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="18" font-weight="700">Chunked export</text>
+<text x="22" y="4300" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">Large repositories can be split into multiple output parts using a</text>
+<text x="22" y="4324" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">configurable token limit per file. This helps fit dumps into smaller</text>
+<text x="22" y="4348" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">context windows.</text>
+<text x="22" y="4388" fill="rgb(255,210,210)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="18" font-weight="700">Semantic chunking</text>
+<text x="22" y="4422" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">Instead of splitting files purely linearly, CodeDumper can group</text>
+<text x="22" y="4446" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">related files together. It prefers keeping files from the same</text>
+<text x="22" y="4470" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">directory, matching base names, and test/spec companions in the same</text>
+<text x="22" y="4494" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">chunk where possible.</text>
+<text x="22" y="4532" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">Example:</text>
+<rect x="22" y="4554" width="716" height="78" fill="rgb(11,3,3)" stroke="rgb(208,215,222)" stroke-width="1"/>
+<text x="32" y="4576" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">Button.tsx</text>
+<text x="32" y="4598" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">Button.test.tsx</text>
+<text x="32" y="4620" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">Button.css</text>
+<text x="22" y="4670" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">are more likely to stay together in the same export part.</text>
+<text x="22" y="4710" fill="rgb(255,210,210)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="18" font-weight="700">Diff / Review Focus Mode</text>
+<text x="22" y="4744" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">For pull-request-style workflows, CodeDumper can focus the dump on</text>
+<text x="22" y="4768" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">changed files and nearby companions.</text>
+<text x="22" y="4806" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">Users may provide:</text>
+<text x="40" y="4844" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• a comma-separated list of changed paths</text>
+<text x="40" y="4876" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• newline-separated changed paths</text>
+<text x="40" y="4908" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• unified diff headers</text>
+<text x="40" y="4940" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• uploaded .diff or .patch files</text>
+<text x="22" y="4978" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">The dump is then narrowed to the most relevant review files plus</text>
+<text x="22" y="5002" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">related tests or companions.</text>
+<text x="22" y="5042" fill="rgb(255,210,210)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="18" font-weight="700">Code condensation</text>
+<text x="22" y="5076" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">Optional code condensation reduces token footprint by removing</text>
+<text x="22" y="5100" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">low-value whitespace and comments. This is useful when repository size</text>
+<text x="22" y="5124" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">is more important than preserving every comment.</text>
+<text x="22" y="5162" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">Because comments can contain architectural or security context, this</text>
+<text x="22" y="5186" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">feature is optional.</text>
+<text x="22" y="5226" fill="rgb(255,210,210)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="18" font-weight="700">Syntax-aware condensation and skeleton mode</text>
+<text x="22" y="5260" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">CodeDumper includes a safer condensation path that avoids destructive</text>
+<text x="22" y="5284" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">regex-based comment stripping for supported workflows. It can preserve</text>
+<text x="22" y="5308" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">code structure while reducing prompt size.</text>
+<text x="22" y="5346" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">The optional skeleton mode extracts compact structural context such as:</text>
+<text x="40" y="5384" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• classes</text>
+<text x="40" y="5416" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• functions</text>
+<text x="40" y="5448" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• exported symbols</text>
+<text x="40" y="5480" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• interfaces and types</text>
+<text x="40" y="5512" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• route or module boundaries where detectable</text>
+<text x="22" y="5550" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">This is useful when a model needs architectural context without every</text>
+<text x="22" y="5574" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">implementation detail.</text>
+<text x="22" y="5614" fill="rgb(255,210,210)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="18" font-weight="700">Token and file explorer</text>
+<text x="22" y="5648" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">The output view includes a token/file explorer that helps identify</text>
+<text x="22" y="5672" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">which folders or files dominate the generated context.</text>
+<text x="22" y="5710" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">This makes it easier to remove accidental high-token areas such as:</text>
+<text x="40" y="5748" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• fixtures</text>
+<text x="40" y="5780" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• generated assets</text>
+<text x="40" y="5812" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• large JSON files</text>
+<text x="40" y="5844" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• reports</text>
+<text x="40" y="5876" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• vendored code</text>
+<text x="40" y="5908" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• test snapshots</text>
+<text x="22" y="5946" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">Large token contributors can be excluded directly from the explorer</text>
+<text x="22" y="5970" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">workflow.</text>
+<text x="22" y="6010" fill="rgb(255,210,210)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="18" font-weight="700">Virtualized preview</text>
+<text x="22" y="6044" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">Large generated dumps are previewed with a virtualized read-only output</text>
+<text x="22" y="6068" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">view to avoid UI freezes caused by very large textareas.</text>
+<text x="22" y="6108" fill="rgb(255,210,210)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="18" font-weight="700">Web Worker processing</text>
+<text x="22" y="6142" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">ZIP processing, decoding, filtering, scanning, token counting, and dump</text>
+<text x="22" y="6166" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">assembly run inside a Web Worker. The React UI remains responsive and</text>
+<text x="22" y="6190" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">the job can be cancelled.</text>
+<text x="22" y="6230" fill="rgb(255,210,210)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="18" font-weight="700">Push to Local LLM</text>
+<text x="22" y="6264" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">CodeDumper can optionally send the generated dump to a local</text>
+<text x="22" y="6288" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">LLM-compatible endpoint such as Ollama or LM Studio.</text>
+<text x="22" y="6326" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">This keeps the workflow local-first while removing the need to copy</text>
+<text x="22" y="6350" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">very large Markdown blocks manually.</text>
+<text x="22" y="6388" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">Typical local endpoints include:</text>
+<rect x="22" y="6410" width="716" height="56" fill="rgb(11,3,3)" stroke="rgb(208,215,222)" stroke-width="1"/>
+<text x="32" y="6432" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">http://localhost:11434</text>
+<text x="32" y="6454" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">http://127.0.0.1:1234</text>
+<text x="22" y="6504" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">This feature is explicitly intended for local/private model workflows.</text>
+<text x="22" y="6528" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">It is separate from the default dump generation flow, which still</text>
+<text x="22" y="6552" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">performs no LLM/API call.</text>
+<text x="22" y="6592" fill="rgb(255,210,210)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="18" font-weight="700">LM Studio browser compatibility</text>
+<text x="22" y="6626" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">When the Web UI talks to LM Studio from http://localhost:3000, the</text>
+<text x="22" y="6650" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">browser may perform a CORS preflight for JSON POST requests. PowerShell</text>
+<text x="22" y="6674" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">or curl can succeed while the browser fails because they do not enforce</text>
+<text x="22" y="6698" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">CORS.</text>
+<text x="22" y="6736" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">CodeDumper therefore tries two transports for OpenAI-compatible LM</text>
+<text x="22" y="6760" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">Studio endpoints:</text>
+<text x="22" y="6798" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">1. standard application/json streaming request 2. no-preflight</text>
+<text x="22" y="6822" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">text/plain;charset=UTF-8 JSON request for LM Studio/browser</text>
+<text x="22" y="6846" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">compatibility</text>
+<text x="22" y="6884" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">Use the LM Studio base URL, for example:</text>
+<rect x="22" y="6906" width="716" height="34" fill="rgb(11,3,3)" stroke="rgb(208,215,222)" stroke-width="1"/>
+<text x="32" y="6928" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">http://192.168.178.62:1234</text>
+<text x="22" y="6978" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">CodeDumper resolves it internally to:</text>
+<rect x="22" y="7000" width="716" height="34" fill="rgb(11,3,3)" stroke="rgb(208,215,222)" stroke-width="1"/>
+<text x="32" y="7022" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">http://192.168.178.62:1234/v1/chat/completions</text>
+<text x="22" y="7072" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">Keep CORS aktivieren and Im lokalen Netzwerk bereitstellen enabled in</text>
+<text x="22" y="7096" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">LM Studio, then restart the local server.</text>
+<text x="22" y="7136" fill="rgb(255,210,210)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="18" font-weight="700">Custom enterprise rules</text>
+<text x="22" y="7170" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">Organizations can define custom security and prompt-injection rules as</text>
+<text x="22" y="7194" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">JSON. This allows teams to detect internal credential formats,</text>
+<text x="22" y="7218" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">proprietary token prefixes, or organization-specific LLM manipulation</text>
+<text x="22" y="7242" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">patterns.</text>
+<text x="22" y="7280" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">Example rule use cases:</text>
+<text x="40" y="7318" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• CORP_API_TKN_</text>
+<text x="40" y="7350" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• internal bearer-token formats</text>
+<text x="40" y="7382" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• customer-specific environment variable names</text>
+<text x="40" y="7414" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• prohibited prompt-injection phrases</text>
+<text x="40" y="7446" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• compliance-specific redaction markers</text>
+<line x1="22" y1="7476" x2="738" y2="7476" stroke="rgb(208,215,222)" stroke-width="1"/>
+<text x="22" y="7518" fill="rgb(255,232,226)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="20" font-weight="700">Security features</text>
+<line x1="22" y1="7528" x2="738" y2="7528" stroke="rgb(208,215,222)" stroke-width="1"/>
+<text x="22" y="7564" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">CodeDumper is built for workflows where the output may later be shared</text>
+<text x="22" y="7588" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">with an LLM, reviewer, vendor, or customer. Security checks are</text>
+<text x="22" y="7612" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">therefore part of the core pipeline.</text>
+<text x="22" y="7652" fill="rgb(255,210,210)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="18" font-weight="700">No API key leakage</text>
+<text x="22" y="7686" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">The frontend does not embed server-side API keys. There is no static</text>
+<text x="22" y="7710" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">injection of environment secrets into the browser bundle.</text>
+<text x="22" y="7750" fill="rgb(255,210,210)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="18" font-weight="700">No LLM call during generation</text>
+<text x="22" y="7784" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">CodeDumper does not send project contents to OpenAI, Anthropic, Google,</text>
+<text x="22" y="7808" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">or any other model provider during dump creation. All processing is</text>
+<text x="22" y="7832" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">local.</text>
+<text x="22" y="7872" fill="rgb(255,210,210)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="18" font-weight="700">Secret and credential scanning</text>
+<text x="22" y="7906" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">CodeDumper scans decoded text for common sensitive values and redacts</text>
+<text x="22" y="7930" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">them before export.</text>
+<text x="22" y="7968" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">Detection includes:</text>
+<text x="40" y="8006" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• AWS access keys</text>
+<text x="40" y="8038" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• OpenAI-style keys</text>
+<text x="40" y="8070" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• GitHub tokens</text>
+<text x="40" y="8102" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• Google API keys</text>
+<text x="40" y="8134" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• private key blocks</text>
+<text x="40" y="8166" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• bearer tokens</text>
+<text x="40" y="8198" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• generic secret assignments</text>
+<text x="40" y="8230" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• high-entropy token-like strings</text>
+<text x="22" y="8268" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">Redactions are reported in the UI warning panel.</text>
+<text x="22" y="8308" fill="rgb(255,210,210)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="18" font-weight="700">Shannon-entropy detection</text>
+<text x="22" y="8342" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">In addition to fixed regex rules, CodeDumper can flag high-entropy</text>
+<text x="22" y="8366" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">Base64-, hex-, and token-like strings. This helps catch custom</text>
+<text x="22" y="8390" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">credentials and organization-specific secrets that do not match</text>
+<text x="22" y="8414" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">standard patterns.</text>
+<text x="22" y="8454" fill="rgb(255,210,210)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="18" font-weight="700">Prompt-injection detection</text>
+<text x="22" y="8488" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">CodeDumper scans files for common indirect prompt-injection phrases,</text>
+<text x="22" y="8512" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">such as attempts to override system instructions or manipulate</text>
+<text x="22" y="8536" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">downstream LLM behavior.</text>
+<text x="22" y="8574" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">Possible actions:</text>
+<text x="40" y="8612" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• warn</text>
+<text x="40" y="8644" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• redact</text>
+<text x="40" y="8676" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• skip affected file</text>
+<text x="22" y="8714" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">This is useful when analyzing third-party repositories or untrusted ZIP</text>
+<text x="22" y="8738" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">archives.</text>
+<text x="22" y="8778" fill="rgb(255,210,210)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="18" font-weight="700">Zip Slip protection</text>
+<text x="22" y="8812" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">Archive paths are normalized and sanitized before they are displayed or</text>
+<text x="22" y="8836" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">exported. Absolute paths, traversal segments, and unsafe path forms are</text>
+<text x="22" y="8860" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">removed or rejected.</text>
+<text x="22" y="8900" fill="rgb(255,210,210)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="18" font-weight="700">ZIP bomb and decompression protection</text>
+<text x="22" y="8934" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">CodeDumper applies layered protections:</text>
+<text x="40" y="8972" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• archive-level size limits</text>
+<text x="40" y="9004" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• per-file size limits</text>
+<text x="40" y="9036" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• file-count limits</text>
+<text x="40" y="9068" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• path-length limits</text>
+<text x="40" y="9100" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• compression-ratio checks</text>
+<text x="40" y="9132" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• guarded extraction</text>
+<text x="40" y="9164" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• running byte counters</text>
+<text x="40" y="9196" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• Worker watchdog termination</text>
+<text x="22" y="9234" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">Selected extraction paths use guarded streaming via fflate to reduce</text>
+<text x="22" y="9258" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">memory-exhaustion risk compared with buffering entire files blindly.</text>
+<text x="22" y="9298" fill="rgb(255,210,210)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="18" font-weight="700">Glob ReDoS protection</text>
+<text x="22" y="9332" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">User-provided include and exclude patterns are validated and bounded to</text>
+<text x="22" y="9356" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">reduce regular-expression denial-of-service risks caused by</text>
+<text x="22" y="9380" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">pathological glob patterns.</text>
+<text x="22" y="9420" fill="rgb(255,210,210)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="18" font-weight="700">Hardened Electron configuration</text>
+<text x="22" y="9454" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">The Electron build is configured with a hardened browser environment:</text>
+<text x="40" y="9492" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• nodeIntegration: false</text>
+<text x="40" y="9524" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• contextIsolation: true</text>
+<text x="40" y="9556" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• sandbox: true</text>
+<text x="40" y="9588" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• webSecurity: true</text>
+<text x="40" y="9620" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• denied permission requests</text>
+<text x="40" y="9652" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• navigation restrictions</text>
+<text x="40" y="9684" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• external window restrictions</text>
+<text x="40" y="9716" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• Content Security Policy headers</text>
+<text x="22" y="9756" fill="rgb(255,210,210)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="18" font-weight="700">ReDoS hardening</text>
+<text x="22" y="9790" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">CodeDumper validates custom glob and regex-like rule inputs, applies</text>
+<text x="22" y="9814" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">scan limits, and avoids unbounded high-risk text scans where possible.</text>
+<text x="22" y="9838" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">Long lines and minified files are constrained before sensitive pattern</text>
+<text x="22" y="9862" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">matching is performed.</text>
+<text x="22" y="9902" fill="rgb(255,210,210)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="18" font-weight="700">Encoding and obfuscation hardening</text>
+<text x="22" y="9936" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">Before prompt-injection and secret checks, text can be normalized using</text>
+<text x="22" y="9960" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">Unicode NFKC. This reduces bypasses based on unusual Unicode forms.</text>
+<text x="22" y="9998" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">The scanner also performs heuristic checks for suspicious</text>
+<text x="22" y="10022" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">Base64-encoded strings and scans decoded candidates for secrets or</text>
+<text x="22" y="10046" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">prompt-injection phrases.</text>
+<text x="22" y="10086" fill="rgb(255,210,210)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="18" font-weight="700">Symlink and nested-archive protection</text>
+<text x="22" y="10120" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">ZIP symlink entries are dropped to avoid unsafe path semantics in</text>
+<text x="22" y="10144" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">browser, desktop, and CLI workflows.</text>
+<text x="22" y="10182" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">Nested ZIP-like files are detected through magic bytes and treated as</text>
+<text x="22" y="10206" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">non-recursive archive payloads. CodeDumper does not recursively unpack</text>
+<text x="22" y="10230" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">archive-in-archive content by default.</text>
+<line x1="22" y1="10260" x2="738" y2="10260" stroke="rgb(208,215,222)" stroke-width="1"/>
+<text x="22" y="10302" fill="rgb(255,232,226)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="20" font-weight="700">Architecture</text>
+<line x1="22" y1="10312" x2="738" y2="10312" stroke="rgb(208,215,222)" stroke-width="1"/>
+<text x="22" y="10348" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">CodeDumper is structured around a browser-first React frontend and a</text>
+<text x="22" y="10372" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">processing core that can be reused by desktop and CLI workflows.</text>
+<rect x="22" y="10394" width="716" height="298" fill="rgb(11,3,3)" stroke="rgb(208,215,222)" stroke-width="1"/>
+<text x="32" y="10416" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">.</text>
+<text x="32" y="10438" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">├── src/</text>
+<text x="32" y="10460" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">│   ├── components/          # UI components</text>
+<text x="32" y="10482" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">│   ├── services/            # ZIP processing, filtering, tokenization, </text>
+<text x="32" y="10504" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">│   ├── workers/             # Web Worker entry points</text>
+<text x="32" y="10526" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">│   └── App.tsx              # Main application shell</text>
+<text x="32" y="10548" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">├── electron/                # Hardened Electron main/preload code</text>
+<text x="32" y="10570" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">├── cli/                     # Headless CLI entry point</text>
+<text x="32" y="10592" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">├── .github/actions/         # GitHub Action definition</text>
+<text x="32" y="10614" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">├── .github/workflows/       # CI example workflow</text>
+<text x="32" y="10636" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">├── package.json</text>
+<text x="32" y="10658" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">├── vite.config.ts</text>
+<text x="32" y="10680" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">└── tsconfig.json</text>
+<text x="22" y="10730" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">The core pipeline is approximately:</text>
+<rect x="22" y="10752" width="716" height="430" fill="rgb(11,3,3)" stroke="rgb(208,215,222)" stroke-width="1"/>
+<text x="32" y="10774" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">ZIP upload</text>
+<text x="32" y="10796" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">  → archive inspection</text>
+<text x="32" y="10818" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">  → path normalization</text>
+<text x="32" y="10840" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">  → ignore-rule loading</text>
+<text x="32" y="10862" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">  → stack detection</text>
+<text x="32" y="10884" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">  → file tree selection</text>
+<text x="32" y="10906" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">  → LLM Code Review filtering</text>
+<text x="32" y="10928" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">  → guarded extraction</text>
+<text x="32" y="10950" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">  → text decoding</text>
+<text x="32" y="10972" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">  → Unicode normalization</text>
+<text x="32" y="10994" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">  → secret scanning</text>
+<text x="32" y="11016" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">  → high-entropy scanning</text>
+<text x="32" y="11038" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">  → prompt-injection scanning</text>
+<text x="32" y="11060" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">  → custom enterprise rules</text>
+<text x="32" y="11082" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">  → optional condensation / skeletonization</text>
+<text x="32" y="11104" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">  → token estimation</text>
+<text x="32" y="11126" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">  → semantic chunking</text>
+<text x="32" y="11148" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">  → Markdown/XML/JSON composition</text>
+<text x="32" y="11170" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">  → token explorer / preview / download / local LLM handoff</text>
+<line x1="22" y1="11212" x2="738" y2="11212" stroke="rgb(208,215,222)" stroke-width="1"/>
+<text x="22" y="11254" fill="rgb(255,232,226)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="20" font-weight="700">Installation</text>
+<line x1="22" y1="11264" x2="738" y2="11264" stroke="rgb(208,215,222)" stroke-width="1"/>
+<text x="22" y="11302" fill="rgb(255,210,210)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="18" font-weight="700">Requirements</text>
+<text x="40" y="11336" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• Node.js 20 LTS recommended</text>
+<text x="40" y="11368" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• npm 10+</text>
+<text x="40" y="11400" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• Windows, macOS, or Linux</text>
+<text x="22" y="11438" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">Electron installation requires access to Electron release downloads</text>
+<text x="22" y="11462" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">during normal package installation.</text>
+<text x="22" y="11502" fill="rgb(255,210,210)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="18" font-weight="700">Install dependencies</text>
+<rect x="22" y="11520" width="716" height="34" fill="rgb(11,3,3)" stroke="rgb(208,215,222)" stroke-width="1"/>
+<text x="32" y="11542" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">npm install</text>
+<text x="22" y="11592" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">If package installation fails because of environment-specific Electron</text>
+<text x="22" y="11616" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">download restrictions, web-only verification can be performed with:</text>
+<rect x="22" y="11638" width="716" height="34" fill="rgb(11,3,3)" stroke="rgb(208,215,222)" stroke-width="1"/>
+<text x="32" y="11660" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">npm install --ignore-scripts</text>
+<line x1="22" y1="11702" x2="738" y2="11702" stroke="rgb(208,215,222)" stroke-width="1"/>
+<text x="22" y="11744" fill="rgb(255,232,226)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="20" font-weight="700">Development</text>
+<line x1="22" y1="11754" x2="738" y2="11754" stroke="rgb(208,215,222)" stroke-width="1"/>
+<text x="22" y="11792" fill="rgb(255,210,210)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="18" font-weight="700">Start the web app</text>
+<rect x="22" y="11810" width="716" height="34" fill="rgb(11,3,3)" stroke="rgb(208,215,222)" stroke-width="1"/>
+<text x="32" y="11832" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">npm run dev</text>
+<text x="22" y="11884" fill="rgb(255,210,210)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="18" font-weight="700">Build the web app</text>
+<rect x="22" y="11902" width="716" height="34" fill="rgb(11,3,3)" stroke="rgb(208,215,222)" stroke-width="1"/>
+<text x="32" y="11924" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">npm run build:web</text>
+<text x="22" y="11976" fill="rgb(255,210,210)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="18" font-weight="700">Type-check</text>
+<rect x="22" y="11994" width="716" height="34" fill="rgb(11,3,3)" stroke="rgb(208,215,222)" stroke-width="1"/>
+<text x="32" y="12016" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">npx tsc --noEmit</text>
+<text x="22" y="12068" fill="rgb(255,210,210)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="18" font-weight="700">Start Electron development mode</text>
+<rect x="22" y="12086" width="716" height="34" fill="rgb(11,3,3)" stroke="rgb(208,215,222)" stroke-width="1"/>
+<text x="32" y="12108" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">npm run electron:dev</text>
+<text x="22" y="12160" fill="rgb(255,210,210)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="18" font-weight="700">Build desktop package</text>
+<rect x="22" y="12178" width="716" height="34" fill="rgb(11,3,3)" stroke="rgb(208,215,222)" stroke-width="1"/>
+<text x="32" y="12200" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">npm run electron:build</text>
+<line x1="22" y1="12242" x2="738" y2="12242" stroke="rgb(208,215,222)" stroke-width="1"/>
+<text x="22" y="12284" fill="rgb(255,232,226)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="20" font-weight="700">CLI usage</text>
+<line x1="22" y1="12294" x2="738" y2="12294" stroke="rgb(208,215,222)" stroke-width="1"/>
+<text x="22" y="12330" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">CodeDumper includes a headless CLI for automation and CI pipelines.</text>
+<text x="22" y="12368" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">Basic usage:</text>
+<rect x="22" y="12390" width="716" height="34" fill="rgb(11,3,3)" stroke="rgb(208,215,222)" stroke-width="1"/>
+<text x="32" y="12412" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">npm run cli -- project.zip codedump.md</text>
+<text x="22" y="12462" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">With token chunking:</text>
+<rect x="22" y="12484" width="716" height="34" fill="rgb(11,3,3)" stroke="rgb(208,215,222)" stroke-width="1"/>
+<text x="32" y="12506" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">npm run cli -- project.zip codedump.md --max-tokens 120000</text>
+<text x="22" y="12556" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">With review focus paths:</text>
+<rect x="22" y="12578" width="716" height="34" fill="rgb(11,3,3)" stroke="rgb(208,215,222)" stroke-width="1"/>
+<text x="32" y="12600" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">npm run cli -- project.zip codedump.md --focus src/auth.ts,src/auth.test.ts</text>
+<text x="22" y="12650" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">With a newline-separated or diff-derived focus list:</text>
+<rect x="22" y="12672" width="716" height="34" fill="rgb(11,3,3)" stroke="rgb(208,215,222)" stroke-width="1"/>
+<text x="32" y="12694" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">npm run cli -- project.zip codedump.md --focus-file changed-files.txt</text>
+<text x="22" y="12744" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">With a patch file:</text>
+<rect x="22" y="12766" width="716" height="34" fill="rgb(11,3,3)" stroke="rgb(208,215,222)" stroke-width="1"/>
+<text x="32" y="12788" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">npm run cli -- project.zip codedump.md --focus-from-patch pr-123.patch</text>
+<text x="22" y="12838" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">With custom enterprise rules:</text>
+<rect x="22" y="12860" width="716" height="34" fill="rgb(11,3,3)" stroke="rgb(208,215,222)" stroke-width="1"/>
+<text x="32" y="12882" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">npm run cli -- project.zip codedump.md --custom-rules rules.json</text>
+<text x="22" y="12932" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">With skeleton condensation:</text>
+<rect x="22" y="12954" width="716" height="34" fill="rgb(11,3,3)" stroke="rgb(208,215,222)" stroke-width="1"/>
+<text x="32" y="12976" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">npm run cli -- project.zip codedump.md --ast-mode skeleton</text>
+<text x="22" y="13026" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">Recommended CI mode:</text>
+<rect x="22" y="13048" width="716" height="34" fill="rgb(11,3,3)" stroke="rgb(208,215,222)" stroke-width="1"/>
+<text x="32" y="13070" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">npm run cli -- repository.zip codedump.md --llm-code-review --semantic-chunking </text>
+<line x1="22" y1="13112" x2="738" y2="13112" stroke="rgb(208,215,222)" stroke-width="1"/>
+<text x="22" y="13154" fill="rgb(255,232,226)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="20" font-weight="700">GitHub Action usage</text>
+<line x1="22" y1="13164" x2="738" y2="13164" stroke="rgb(208,215,222)" stroke-width="1"/>
+<text x="22" y="13200" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">The repository includes a local GitHub Action and workflow template for</text>
+<text x="22" y="13224" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">producing LLM-ready review artifacts in CI.</text>
+<text x="22" y="13262" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">Example workflow behavior:</text>
+<text x="22" y="13300" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">1. checkout repository 2. package repository as ZIP 3. run CodeDumper</text>
+<text x="22" y="13324" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">CLI 4. upload generated dump as workflow artifact</text>
+<text x="22" y="13362" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">Typical usage:</text>
+<rect x="22" y="13384" width="716" height="584" fill="rgb(11,3,3)" stroke="rgb(208,215,222)" stroke-width="1"/>
+<text x="32" y="13406" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">name: CodeDump Review Artifact</text>
+<text x="32" y="13428" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14"></text>
+<text x="32" y="13450" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">on:</text>
+<text x="32" y="13472" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">  pull_request:</text>
+<text x="32" y="13494" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">  workflow_dispatch:</text>
+<text x="32" y="13516" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14"></text>
+<text x="32" y="13538" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">jobs:</text>
+<text x="32" y="13560" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">  codedump:</text>
+<text x="32" y="13582" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">    runs-on: ubuntu-latest</text>
+<text x="32" y="13604" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">    steps:</text>
+<text x="32" y="13626" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">      - uses: actions/checkout@v4</text>
+<text x="32" y="13648" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14"></text>
+<text x="32" y="13670" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">      - uses: actions/setup-node@v4</text>
+<text x="32" y="13692" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">        with:</text>
+<text x="32" y="13714" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">          node-version: 20</text>
+<text x="32" y="13736" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14"></text>
+<text x="32" y="13758" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">      - run: npm ci</text>
+<text x="32" y="13780" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14"></text>
+<text x="32" y="13802" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">      - run: zip -r repository.zip . -x &quot;node_modules/*&quot; &quot;dist/*&quot; &quot;.git/*&quot;</text>
+<text x="32" y="13824" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14"></text>
+<text x="32" y="13846" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">      - run: npm run cli -- repository.zip codedump.md --llm-code-review --max-t</text>
+<text x="32" y="13868" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14"></text>
+<text x="32" y="13890" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">      - uses: actions/upload-artifact@v4</text>
+<text x="32" y="13912" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">        with:</text>
+<text x="32" y="13934" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">          name: llm-code-review-dump</text>
+<text x="32" y="13956" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">          path: codedump.md</text>
+<line x1="22" y1="13998" x2="738" y2="13998" stroke="rgb(208,215,222)" stroke-width="1"/>
+<text x="22" y="14044" fill="rgb(255,210,210)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="18" font-weight="700">LM Studio on localhost or LAN</text>
+<text x="22" y="14078" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">The Local LLM Panel accepts either a server base URL or a full</text>
+<text x="22" y="14102" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">chat-completions endpoint.</text>
+<text x="22" y="14140" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">Examples:</text>
+<rect x="22" y="14162" width="716" height="100" fill="rgb(11,3,3)" stroke="rgb(208,215,222)" stroke-width="1"/>
+<text x="32" y="14184" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">http://localhost:1234</text>
+<text x="32" y="14206" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">http://localhost:1234/v1/chat/completions</text>
+<text x="32" y="14228" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">http://192.168.178.62:1234</text>
+<text x="32" y="14250" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">http://192.168.178.62:1234/v1/chat/completions</text>
+<text x="22" y="14300" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">For LM Studio:</text>
+<text x="22" y="14338" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">1. Start the LM Studio local server. 2. Load a model in LM Studio. 3.</text>
+<text x="22" y="14362" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">Enable LAN access / bind to all interfaces if CodeDumper runs on</text>
+<text x="22" y="14386" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">another device. 4. Allow port 1234 in the firewall. 5. In CodeDumper,</text>
+<text x="22" y="14410" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">choose OpenAI-compatible / LM Studio. 6. Click Load models or enter the</text>
+<text x="22" y="14434" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">exact running model name manually. 7. Send the dump.</text>
+<text x="22" y="14472" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">If the browser shows Failed to fetch, the problem is usually one of</text>
+<text x="22" y="14496" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">these:</text>
+<text x="40" y="14534" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• the LM Studio server is not running</text>
+<text x="40" y="14566" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• the URL is missing the correct host or port</text>
+<text x="40" y="14598" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• the server is bound only to localhost, but CodeDumper is using a</text>
+<text x="40" y="14622" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">LAN IP</text>
+<text x="40" y="14654" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• the firewall blocks port 1234</text>
+<text x="40" y="14686" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• the server rejects browser CORS requests</text>
+<text x="22" y="14724" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">A quick check is to open this URL directly in the browser:</text>
+<rect x="22" y="14746" width="716" height="34" fill="rgb(11,3,3)" stroke="rgb(208,215,222)" stroke-width="1"/>
+<text x="32" y="14768" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">http://192.168.178.62:1234/v1/models</text>
+<text x="22" y="14818" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">If that works in a browser tab but the panel still cannot fetch it, use</text>
+<text x="22" y="14842" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">the Electron app or enable CORS support in the local server.</text>
+<line x1="22" y1="14872" x2="738" y2="14872" stroke="rgb(208,215,222)" stroke-width="1"/>
+<text x="22" y="14914" fill="rgb(255,232,226)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="20" font-weight="700">Recommended LLM workflow</text>
+<line x1="22" y1="14924" x2="738" y2="14924" stroke="rgb(208,215,222)" stroke-width="1"/>
+<text x="22" y="14960" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">For a full repository review:</text>
+<text x="22" y="14998" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">1. Enable LLM Code Review Mode. 2. Keep secret scanning enabled. 3.</text>
+<text x="22" y="15022" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">Keep prompt-injection scanning enabled for untrusted repositories. 4.</text>
+<text x="22" y="15046" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">Exclude generated data, reports, binaries, and lockfiles. 5. Use</text>
+<text x="22" y="15070" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">semantic chunking when the output exceeds the target model context</text>
+<text x="22" y="15094" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">window. 6. Review warnings before sending any dump to an external</text>
+<text x="22" y="15118" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">system.</text>
+<text x="22" y="15156" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">For pull-request review:</text>
+<text x="22" y="15194" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">1. Enable Diff / Review Focus Mode. 2. Provide changed file paths or a</text>
+<text x="22" y="15218" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">unified diff. 3. Include nearby tests and companions. 4. Generate a</text>
+<text x="22" y="15242" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">compact review dump. 5. Send only the focused dump to the LLM.</text>
+<line x1="22" y1="15272" x2="738" y2="15272" stroke="rgb(208,215,222)" stroke-width="1"/>
+<text x="22" y="15314" fill="rgb(255,232,226)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="20" font-weight="700">What should not be included in an LLM code dump</text>
+<line x1="22" y1="15324" x2="738" y2="15324" stroke="rgb(208,215,222)" stroke-width="1"/>
+<text x="22" y="15360" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">CodeDumper is intentionally aggressive about excluding low-value or</text>
+<text x="22" y="15384" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">risky material.</text>
+<text x="22" y="15422" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">Usually exclude:</text>
+<rect x="22" y="15444" width="716" height="430" fill="rgb(11,3,3)" stroke="rgb(208,215,222)" stroke-width="1"/>
+<text x="32" y="15466" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">node_modules/**</text>
+<text x="32" y="15488" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">dist/**</text>
+<text x="32" y="15510" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">build/**</text>
+<text x="32" y="15532" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">release/**</text>
+<text x="32" y="15554" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">coverage/**</text>
+<text x="32" y="15576" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">reports/**</text>
+<text x="32" y="15598" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">data/**</text>
+<text x="32" y="15620" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">.git/**</text>
+<text x="32" y="15642" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">*.lock</text>
+<text x="32" y="15664" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">package-lock.json</text>
+<text x="32" y="15686" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">yarn.lock</text>
+<text x="32" y="15708" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">pnpm-lock.yaml</text>
+<text x="32" y="15730" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">*.map</text>
+<text x="32" y="15752" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">*.log</text>
+<text x="32" y="15774" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">*.min.js</text>
+<text x="32" y="15796" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">*.pem</text>
+<text x="32" y="15818" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">*.key</text>
+<text x="32" y="15840" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">.env</text>
+<text x="32" y="15862" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">.env.*</text>
+<text x="22" y="15912" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">Usually include:</text>
+<rect x="22" y="15934" width="716" height="584" fill="rgb(11,3,3)" stroke="rgb(208,215,222)" stroke-width="1"/>
+<text x="32" y="15956" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">src/**</text>
+<text x="32" y="15978" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">app/**</text>
+<text x="32" y="16000" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">lib/**</text>
+<text x="32" y="16022" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">server/**</text>
+<text x="32" y="16044" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">client/**</text>
+<text x="32" y="16066" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">components/**</text>
+<text x="32" y="16088" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">services/**</text>
+<text x="32" y="16110" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">routes/**</text>
+<text x="32" y="16132" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">controllers/**</text>
+<text x="32" y="16154" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">models/**</text>
+<text x="32" y="16176" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">tests/**</text>
+<text x="32" y="16198" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">__tests__/**</text>
+<text x="32" y="16220" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">*.test.*</text>
+<text x="32" y="16242" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">*.spec.*</text>
+<text x="32" y="16264" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">package.json</text>
+<text x="32" y="16286" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">pyproject.toml</text>
+<text x="32" y="16308" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">requirements.txt</text>
+<text x="32" y="16330" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">Cargo.toml</text>
+<text x="32" y="16352" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">go.mod</text>
+<text x="32" y="16374" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">pom.xml</text>
+<text x="32" y="16396" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">build.gradle</text>
+<text x="32" y="16418" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">*.csproj</text>
+<text x="32" y="16440" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">*.sln</text>
+<text x="32" y="16462" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">README.md</text>
+<text x="32" y="16484" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">ARCHITECTURE.md</text>
+<text x="32" y="16506" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">SECURITY.md</text>
+<line x1="22" y1="16548" x2="738" y2="16548" stroke="rgb(208,215,222)" stroke-width="1"/>
+<text x="22" y="16590" fill="rgb(255,232,226)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="20" font-weight="700">Privacy model</text>
+<line x1="22" y1="16600" x2="738" y2="16600" stroke="rgb(208,215,222)" stroke-width="1"/>
+<text x="22" y="16636" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">CodeDumper is a local processing tool. By design:</text>
+<text x="40" y="16674" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• uploaded ZIP files are processed locally</text>
+<text x="40" y="16706" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• no LLM provider is contacted</text>
+<text x="40" y="16738" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• no project data is uploaded by the app during dump generation</text>
+<text x="40" y="16770" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• token and cost estimates are calculated offline</text>
+<text x="40" y="16802" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• users remain responsible for where they later paste, upload, or</text>
+<text x="40" y="16826" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">send the generated dump</text>
+<line x1="22" y1="16856" x2="738" y2="16856" stroke="rgb(208,215,222)" stroke-width="1"/>
+<text x="22" y="16898" fill="rgb(255,232,226)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="20" font-weight="700">Limitations</text>
+<line x1="22" y1="16908" x2="738" y2="16908" stroke="rgb(208,215,222)" stroke-width="1"/>
+<text x="22" y="16944" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">CodeDumper reduces risk, but it cannot guarantee that every sensitive</text>
+<text x="22" y="16968" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">value or malicious instruction will be detected.</text>
+<text x="22" y="17006" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">Known limitations:</text>
+<text x="40" y="17044" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• entropy scanning can produce false positives</text>
+<text x="40" y="17076" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• prompt-injection phrase matching can miss novel attacks</text>
+<text x="40" y="17108" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• entropy scanning can redact harmless high-randomness identifiers</text>
+<text x="40" y="17140" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• prompt-injection phrase matching can miss novel attacks</text>
+<text x="40" y="17172" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• code condensation may remove comments that are semantically</text>
+<text x="40" y="17196" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">useful</text>
+<text x="40" y="17228" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• skeleton mode is structural and may omit implementation details</text>
+<text x="40" y="17252" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">required for deep debugging</text>
+<text x="40" y="17284" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• semantic chunking is heuristic and not a full dependency graph</text>
+<text x="40" y="17308" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">for every language</text>
+<text x="40" y="17340" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• local LLM handoff depends on the local model server and its</text>
+<text x="40" y="17364" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">context-window limits</text>
+<text x="40" y="17396" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• archive parsing is hardened but adversarial file formats are</text>
+<text x="40" y="17420" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">inherently risky</text>
+<text x="40" y="17452" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• generated dumps should still be reviewed before being shared</text>
+<text x="40" y="17476" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">externally</text>
+<line x1="22" y1="17506" x2="738" y2="17506" stroke="rgb(208,215,222)" stroke-width="1"/>
+<text x="22" y="17548" fill="rgb(255,232,226)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="20" font-weight="700">Enterprise hardening checklist</text>
+<line x1="22" y1="17558" x2="738" y2="17558" stroke="rgb(208,215,222)" stroke-width="1"/>
+<text x="22" y="17594" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">Before using CodeDumper in a regulated or high-sensitivity environment:</text>
+<text x="40" y="17632" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• run dependency audit in your own supply-chain environment</text>
+<text x="40" y="17664" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• pin Node.js and npm versions in CI</text>
+<text x="40" y="17696" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• review Electron build and signing configuration</text>
+<text x="40" y="17728" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• enforce internal allowlists for export destinations</text>
+<text x="40" y="17760" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• keep secret scanning enabled by default</text>
+<text x="40" y="17792" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• keep prompt-injection scanning enabled for third-party code</text>
+<text x="40" y="17824" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• set conservative token and size limits</text>
+<text x="40" y="17856" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• store generated dumps as sensitive artifacts</text>
+<text x="40" y="17888" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• avoid sending proprietary code to external LLM providers unless</text>
+<text x="40" y="17912" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">approved by policy</text>
+<line x1="22" y1="17942" x2="738" y2="17942" stroke="rgb(208,215,222)" stroke-width="1"/>
+<text x="22" y="17984" fill="rgb(255,232,226)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="20" font-weight="700">Scripts</text>
+<line x1="22" y1="17994" x2="738" y2="17994" stroke="rgb(208,215,222)" stroke-width="1"/>
+<text x="22" y="18030" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">Common scripts:</text>
+<rect x="22" y="18052" width="716" height="144" fill="rgb(11,3,3)" stroke="rgb(208,215,222)" stroke-width="1"/>
+<text x="32" y="18074" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">npm run dev</text>
+<text x="32" y="18096" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">npm run build:web</text>
+<text x="32" y="18118" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">npm run electron:dev</text>
+<text x="32" y="18140" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">npm run electron:build</text>
+<text x="32" y="18162" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">npm run cli -- project.zip codedump.md</text>
+<text x="32" y="18184" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">npx tsc --noEmit</text>
+<line x1="22" y1="18226" x2="738" y2="18226" stroke="rgb(208,215,222)" stroke-width="1"/>
+<text x="22" y="18268" fill="rgb(255,232,226)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="20" font-weight="700">Technology stack</text>
+<line x1="22" y1="18278" x2="738" y2="18278" stroke="rgb(208,215,222)" stroke-width="1"/>
+<text x="40" y="18314" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• React</text>
+<text x="40" y="18346" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• TypeScript</text>
+<text x="40" y="18378" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• Vite</text>
+<text x="40" y="18410" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• Electron</text>
+<text x="40" y="18442" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• Web Workers</text>
+<text x="40" y="18474" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• fflate</text>
+<text x="40" y="18506" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• js-tiktoken</text>
+<text x="40" y="18538" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• minimatch</text>
+<text x="40" y="18570" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• Tailwind CSS</text>
+<text x="40" y="18602" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• local LLM compatible HTTP APIs</text>
+<line x1="22" y1="18632" x2="738" y2="18632" stroke="rgb(208,215,222)" stroke-width="1"/>
+<text x="22" y="18674" fill="rgb(255,232,226)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="20" font-weight="700">Roadmap</text>
+<line x1="22" y1="18684" x2="738" y2="18684" stroke="rgb(208,215,222)" stroke-width="1"/>
+<text x="22" y="18720" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">Potential next improvements:</text>
+<text x="40" y="18758" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• full AST-based condensation using Tree-sitter</text>
+<text x="40" y="18790" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• language-specific dependency graph extraction</text>
+<text x="40" y="18822" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• SARIF export for security findings</text>
+<text x="40" y="18854" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• policy profiles for regulated environments</text>
+<text x="40" y="18886" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• organization-wide ignore-rule templates</text>
+<text x="40" y="18918" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• signed desktop releases</text>
+<text x="40" y="18950" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• deterministic dump manifests and checksums</text>
+<text x="40" y="18982" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• full Tree-sitter WASM grammar integration for more languages</text>
+<text x="40" y="19014" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• language-specific dependency graph extraction</text>
+<text x="40" y="19046" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• SARIF export for security findings</text>
+<text x="40" y="19078" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• policy profiles for regulated environments</text>
+<text x="40" y="19110" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• organization-wide ignore-rule templates</text>
+<text x="40" y="19142" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• signed desktop releases</text>
+<text x="40" y="19174" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• deterministic dump manifests and checksums</text>
+<text x="40" y="19206" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">• optional local-only embedding index for repository navigation</text>
+<line x1="22" y1="19236" x2="738" y2="19236" stroke="rgb(208,215,222)" stroke-width="1"/>
+<text x="22" y="19278" fill="rgb(255,232,226)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="20" font-weight="700">License</text>
+<line x1="22" y1="19288" x2="738" y2="19288" stroke="rgb(208,215,222)" stroke-width="1"/>
+<text x="22" y="19324" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">Add your license here, for example:</text>
+<rect x="22" y="19346" width="716" height="34" fill="rgb(11,3,3)" stroke="rgb(208,215,222)" stroke-width="1"/>
+<text x="32" y="19368" fill="rgb(255,214,207)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="14">MIT License</text>
+<line x1="22" y1="19410" x2="738" y2="19410" stroke="rgb(208,215,222)" stroke-width="1"/>
+<text x="22" y="19452" fill="rgb(255,232,226)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="20" font-weight="700">Project status</text>
+<line x1="22" y1="19462" x2="738" y2="19462" stroke="rgb(208,215,222)" stroke-width="1"/>
+<text x="22" y="19498" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">CodeDumper is designed as a professional local-first tool for secure,</text>
+<text x="22" y="19522" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">token-aware, LLM-ready repository export. It is suitable for developer</text>
+<text x="22" y="19546" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">workflows, internal review automation, and enterprise evaluation,</text>
+<text x="22" y="19570" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">provided that generated artifacts are handled according to the</text>
+<text x="22" y="19594" fill="rgb(36,41,47)" font-family="Consolas, Cascadia Mono, Courier New, monospace" font-size="16">organization’s data-protection policies.</text>
+</svg>
 </main>
 </body>
 </html>

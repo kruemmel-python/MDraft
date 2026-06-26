@@ -1,0 +1,8 @@
+MDraft v0.12.3 - Repository rename substrate
+
+The repository is published as kruemmel-python/MDraft.
+
+Compatibility:
+- Existing core/runtime/workspace source layout is preserved.
+- Existing markdown rendering and workspace behavior is preserved.
+- The product-facing executable and installer names are MDraft.

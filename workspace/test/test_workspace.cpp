@@ -8,6 +8,9 @@
 #include "mtx/git_adapter.hpp"
 #include "mtx/snippets.hpp"
 #include "mtx/file_io.hpp"
+#ifdef NDEBUG
+#undef NDEBUG
+#endif
 #include <cassert>
 #include <cstdio>
 #include <filesystem>

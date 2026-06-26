@@ -258,7 +258,7 @@ void add_text(DisplayList& dl, int x, int y, const std::string& text, Rgba color
 }
 
 void add_paragraph(DisplayList& dl, int& y, const ThemePalette& p, const std::string& text, int x, int width) {
-  const int max_chars = std::max(12, width / 8);
+  const int max_chars = std::max(12, width / 10);
   for (const auto& line : wrap_text(strip_inline(text), max_chars)) {
     add_text(dl, x, y, line, p.text, 16);
     y += 24;
@@ -312,7 +312,7 @@ void add_table(DisplayList& dl, int& y, const ThemePalette& p, const std::vector
       const int xx = x + static_cast<int>(c) * col_w;
       dl.commands.push_back(make_line(xx, yy, xx, yy + row_h, p.border, 1));
       const std::string value = (c < cells[r].size()) ? cells[r][c] : std::string{};
-      const int max_chars = std::max(4, (col_w - 16) / 8);
+      const int max_chars = std::max(4, (col_w - 16) / 10);
       std::string shown = value;
       if (static_cast<int>(shown.size()) > max_chars) shown = shown.substr(0, static_cast<std::size_t>(max_chars - 1)) + "…";
       add_text(dl, xx + 8, yy + 8, shown, p.text, 14, r == 0 ? TextWeight::Bold : TextWeight::Regular);
@@ -403,12 +403,49 @@ void add_mermaid(DisplayList& dl, int& y, const ThemePalette& p, const std::vect
 
   for (const auto& n : nodes) {
     dl.commands.push_back(make_rect(n.x, n.y, node_w, node_h, p.panel, p.accent, 1));
-    add_text(dl, n.x + 8, n.y + 7, n.label.substr(0, 16), p.text, 12);
+    add_text(dl, n.x + 8, n.y + 7, n.label.substr(0, 12), p.text, 12);
   }
 
   dl.mermaid_node_count += static_cast<int>(nodes.size());
   dl.mermaid_edge_count += static_cast<int>(edges.size());
   y += fig_h + 18;
+}
+
+std::vector<std::string> wrap_code_line(const std::string& text, int max_chars) {
+  std::vector<std::string> out;
+  if (max_chars < 12) max_chars = 12;
+  if (static_cast<int>(text.size()) <= max_chars) {
+    out.push_back(text);
+    return out;
+  }
+  std::size_t start = 0;
+  bool first = true;
+  while (start < text.size()) {
+    const int current_max = first ? max_chars : (max_chars - 4);
+    std::size_t len = text.size() - start;
+    if (static_cast<int>(len) <= current_max) {
+      std::string segment = text.substr(start);
+      if (!first) segment = "    " + segment;
+      out.push_back(segment);
+      break;
+    }
+    std::size_t split_pos = start + static_cast<std::size_t>(current_max);
+    std::size_t space = text.find_last_of(" \t", split_pos);
+    if (space != std::string::npos && space > start) {
+      std::string segment = text.substr(start, space - start);
+      if (!first) segment = "    " + segment;
+      out.push_back(segment);
+      start = space + 1;
+    } else {
+      std::string segment = text.substr(start, static_cast<std::size_t>(current_max));
+      if (!first) segment = "    " + segment;
+      out.push_back(segment);
+      start += static_cast<std::size_t>(current_max);
+    }
+    first = false;
+  }
+  if (out.empty()) out.push_back("");
+  return out;
 }
 
 } // namespace
@@ -457,10 +494,18 @@ DisplayList markdown_to_display_list_with_base(const std::string& markdown, Html
         if (in_mermaid) {
           add_mermaid(dl, y, p, fence, x, content_w);
         } else {
-          const int h = std::max(34, 12 + static_cast<int>(fence.size()) * 22);
+          std::vector<std::string> wrapped_fence;
+          for (const auto& l : fence) {
+            auto wrapped = wrap_code_line(l, 80);
+            wrapped_fence.insert(wrapped_fence.end(), wrapped.begin(), wrapped.end());
+          }
+          const int h = std::max(34, 12 + static_cast<int>(wrapped_fence.size()) * 22);
           dl.commands.push_back(make_rect(x, y, content_w, h, {11,3,3,255}, p.border, 1));
           int yy = y + 8;
-          for (const auto& l : fence) { add_text(dl, x + 10, yy, l.substr(0, 96), {255,214,207,255}, 14); yy += 22; }
+          for (const auto& l : wrapped_fence) {
+            add_text(dl, x + 10, yy, l, {255,214,207,255}, 14);
+            yy += 22;
+          }
           y += h + 16;
         }
         in_code = false;
@@ -544,10 +589,18 @@ DisplayList markdown_to_display_list_with_base(const std::string& markdown, Html
     }
     if (starts_with(t, ">")) {
       flush_paragraph();
-      dl.commands.push_back(make_rect(x, y - 2, 3, 26, p.accent));
-      dl.commands.push_back(make_rect(x + 8, y - 4, content_w - 8, 30, p.soft));
-      add_text(dl, x + 16, y, strip_inline(trim(t.substr(1))), {200,170,165,255}, 16);
-      y += 36;
+      const std::string quote_text = strip_inline(trim(t.substr(1)));
+      const int max_chars = std::max(12, (content_w - 24) / 10);
+      const auto quote_lines = wrap_text(quote_text, max_chars);
+      const int h = static_cast<int>(quote_lines.size()) * 24 + 6;
+      dl.commands.push_back(make_rect(x, y - 2, 3, h - 4, p.accent));
+      dl.commands.push_back(make_rect(x + 8, y - 4, content_w - 8, h, p.soft));
+      int yy = y;
+      for (const auto& line : quote_lines) {
+        add_text(dl, x + 16, yy, line, {200,170,165,255}, 16);
+        yy += 24;
+      }
+      y += h + 6;
       continue;
     }
 

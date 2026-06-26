@@ -1,6 +1,6 @@
 # CMake/Windows ABI
 
-v0.6.5 macht CMake zum primären Windows-Buildpfad.
+v0.12.3 nutzt CMake als primären Windows-Buildpfad für MDraft.
 
 ## Targets
 
@@ -15,5 +15,8 @@ Die Win32-GUI linkt nur gegen native System-ABIs:
 
 - user32
 - gdi32
+- shell32
+- comdlg32
+- gdiplus
 
 Keine WebView, kein Electron, kein CEF, kein Qt.

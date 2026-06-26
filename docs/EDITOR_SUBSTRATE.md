@@ -1,4 +1,4 @@
-# MDraft v0.3 Editor-Substrat
+# MarkTeX v0.3 Editor-Substrat
 
 ## EditorState
 

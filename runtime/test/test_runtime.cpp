@@ -1,5 +1,8 @@
 #include "mtx/editor_runtime.hpp"
 #include "mtx/file_io.hpp"
+#ifdef NDEBUG
+#undef NDEBUG
+#endif
 #include <cassert>
 #include <cstdio>
 #include <exception>

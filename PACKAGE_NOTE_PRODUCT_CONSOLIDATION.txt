@@ -1,0 +1,11 @@
+MDraft v0.12.3 - Product consolidation
+
+This release consolidates the public product identity around MDraft.
+
+Changes:
+- CMake project name is mdraft_native_cpp.
+- Build targets are mdraft-cli, mdraft-win32 and mdraft-x11.
+- MSI package name is MDraft.
+- README, architecture, user guide and feature matrix use the MDraft product name.
+
+The internal C++ namespace remains mtx for ABI stability.

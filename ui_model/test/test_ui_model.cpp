@@ -9,6 +9,9 @@
 #include "mtx/selection_engine.hpp"
 #include "mtx/cursor_manager.hpp"
 #include "mtx/context_projection.hpp"
+#ifdef NDEBUG
+#undef NDEBUG
+#endif
 #include <cassert>
 #include <iostream>
 #include <stdexcept>

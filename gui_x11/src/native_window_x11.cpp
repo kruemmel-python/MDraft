@@ -19,7 +19,7 @@ NativeWindowX11::NativeWindowX11(int w, int h) : width_(w), height_(h), menu_(28
   screen_ = DefaultScreen(d_);
   win_ = XCreateSimpleWindow(d_, RootWindow(d_, screen_), 50, 50, width_, height_, 1,
                              BlackPixel(d_, screen_), WhitePixel(d_, screen_));
-  XStoreName(d_, win_, "MDraft X11 - v0.6.2 feedback/html kernel");
+  XStoreName(d_, win_, "MDraft X11 - v0.12.3");
   XSelectInput(d_, win_, ExposureMask | KeyPressMask | StructureNotifyMask |
                         ButtonPressMask | ButtonReleaseMask | PointerMotionMask);
   wm_delete_ = XInternAtom(d_, "WM_DELETE_WINDOW", False);
@@ -151,7 +151,7 @@ void NativeWindowX11::draw(const GapBuffer& buffer, const EditorState& state) {
 
   fill_rect(0, height_ - status_h, width_, status_h, 0xefefef);
   set_color(0x202020);
-  std::string title = "MDraft v0.6.2  mode=" + std::string(state.mode == EditorMode::Insert ? "INSERT" : "COMMAND") +
+  std::string title = "MDraft v0.12.3  mode=" + std::string(state.mode == EditorMode::Insert ? "INSERT" : "COMMAND") +
                       "  " + (state.dirty ? "dirty" : "clean") +
                       "  cursor=" + std::to_string(state.cursor_byte) +
                       "  scroll=" + std::to_string(state.scroll_row) +

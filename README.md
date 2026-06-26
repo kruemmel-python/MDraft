@@ -4,7 +4,7 @@
 **Native Markdown Workspace Editor**  
 **Developer:** Ralf Krümmel
 
-**MDraft v0.12.2**  
+**MDraft v0.12.3**  
 Codename: **Workspace Snippets Images**  
 Status: **Developer Preview / Stable Core**
 
@@ -72,7 +72,7 @@ gui_win32/
 ## Build unter Windows
 
 ```powershell
-cd D:\mdraft_snippets_images_v0122
+cd D:\marktex_workspace_search_v0102
 
 $env:CMAKE_EXE = "C:\Program Files\CMake\bin\cmake.exe"
 $env:CTEST_EXE = "C:\Program Files\CMake\bin\ctest.exe"

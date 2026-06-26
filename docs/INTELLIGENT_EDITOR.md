@@ -1,4 +1,4 @@
-# MDraft v0.4 — Intelligent-Editor-Substrat
+# MarkTeX v0.4 — Intelligent-Editor-Substrat
 
 ## Prinzip
 
