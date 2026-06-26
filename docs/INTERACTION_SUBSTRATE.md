@@ -1,4 +1,4 @@
-# MarkTeX Native v0.5 Interaction Substrate
+# MDraft Interaction Substrate
 
 ## Prinzip
 

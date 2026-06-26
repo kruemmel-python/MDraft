@@ -1,4 +1,4 @@
-# MarkTeX Native v0.6 Runtime Kernel
+# MDraft Runtime Kernel
 
 v0.6 removes application decisions from the X11 projection layer.
 
