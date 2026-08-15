@@ -4,7 +4,7 @@
 **Native Markdown Workspace Editor**  
 **Developer:** Ralf Krümmel
 
-**MDraft v0.12.4**  
+**MDraft v0.12.5**
 Codename: **Workspace Snippets Images**  
 Status: **Developer Preview / Stable Core**
 

@@ -1,0 +1,8 @@
+MDraft v0.12.5 - Win32 UTF-8 editor rendering
+
+Fixes:
+- German umlauts and other UTF-8 characters are rendered correctly in the native Win32 editor pane.
+- The editor draw loop now paints full UTF-8 codepoints instead of individual bytes.
+- Glyph metrics count UTF-8 continuation bytes as part of the same visible character, improving cursor and mouse positioning.
+
+The RenderIR/HTML preview and exported HTML already used UTF-8 string conversion; this release fixes the native editor surface to match that behavior.

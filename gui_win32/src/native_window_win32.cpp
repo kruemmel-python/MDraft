@@ -57,6 +57,33 @@ std::string narrow_utf8(const wchar_t* text) {
   return out;
 }
 
+bool is_utf8_continuation(unsigned char c) noexcept {
+  return (c & 0xC0) == 0x80;
+}
+
+std::size_t utf8_codepoint_len(const std::string& text, std::size_t pos, std::size_t end) noexcept {
+  if (pos >= end || pos >= text.size()) return 0;
+  const unsigned char c = static_cast<unsigned char>(text[pos]);
+  const std::size_t available = std::min(end, text.size()) - pos;
+  if (c < 0x80) return 1;
+  if (c >= 0xC2 && c <= 0xDF && available >= 2 &&
+      is_utf8_continuation(static_cast<unsigned char>(text[pos + 1]))) {
+    return 2;
+  }
+  if (c >= 0xE0 && c <= 0xEF && available >= 3 &&
+      is_utf8_continuation(static_cast<unsigned char>(text[pos + 1])) &&
+      is_utf8_continuation(static_cast<unsigned char>(text[pos + 2]))) {
+    return 3;
+  }
+  if (c >= 0xF0 && c <= 0xF4 && available >= 4 &&
+      is_utf8_continuation(static_cast<unsigned char>(text[pos + 1])) &&
+      is_utf8_continuation(static_cast<unsigned char>(text[pos + 2])) &&
+      is_utf8_continuation(static_cast<unsigned char>(text[pos + 3]))) {
+    return 4;
+  }
+  return 1;
+}
+
 std::string extract_filename_tail(const std::string& p) {
   const std::size_t slash = p.find_last_of("/\\");
   return slash == std::string::npos ? p : p.substr(slash + 1);
@@ -1134,16 +1161,16 @@ void NativeWindowWin32::draw_editor(HDC hdc, int editor_w) {
     std::size_t bi = row_col_to_byte(idx, row, v.first_col);
     int x = text_x;
     while (bi < e && x < editor_w - 24) {
-      char c = text[bi];
-      if (c == '\t') c = ' ';
+      const std::size_t glyph_len = std::max<std::size_t>(1, utf8_codepoint_len(text, bi, e));
+      std::string glyph = text.substr(bi, glyph_len);
+      if (glyph == "\t") glyph = " ";
       TextStyle st = attrs.at(bi);
       COLORREF bg = style_bg(st);
       if (bg != RGB(255,255,255)) fill_rect(hdc, x, y, char_w_, line_h_, bg);
-      char ch[2] = {c ? c : ' ', 0};
-      draw_text(hdc, x, y, ch, style_fg(st), bg, false);
-      if (has_style(st, TextStyle::Bold)) draw_text(hdc, x + 1, y, ch, style_fg(st), bg, false);
+      draw_text(hdc, x, y, glyph, style_fg(st), bg, false);
+      if (has_style(st, TextStyle::Bold)) draw_text(hdc, x + 1, y, glyph, style_fg(st), bg, false);
       x += char_w_;
-      ++bi;
+      bi += glyph_len;
     }
   }
 

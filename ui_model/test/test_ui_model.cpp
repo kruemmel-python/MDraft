@@ -83,6 +83,11 @@ static void test_dispatchers_and_metrics() {
   gm.set_fixed_width(8);
   assert(gm.measure_bytes("abcd", 1, 3) == 16);
   assert(gm.byte_at_x("abcd", 0, 4, 13) == 2);
+  const std::string utf8 = u8"für";
+  assert(gm.measure_bytes(utf8, 0, utf8.size()) == 24);
+  assert(gm.byte_at_x(utf8, 0, utf8.size(), 6) == 1);
+  assert(gm.byte_at_x(utf8, 0, utf8.size(), 14) == 3);
+  assert(gm.byte_at_x(utf8, 0, utf8.size(), 22) == utf8.size());
 
   mtx::MenuBar mb;
   mb.rebuild(reg, 8);

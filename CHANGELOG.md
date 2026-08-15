@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.12.5 - Win32 UTF-8 editor rendering
+
+- Fixed Win32 editor rendering for German umlauts and other UTF-8 characters.
+- Draws complete UTF-8 codepoints instead of isolated bytes in the native editor pane.
+- Aligns glyph measurement and mouse/cursor mapping with visible UTF-8 characters.
+- Keeps the RenderIR/HTML preview and exported HTML UTF-8 behavior unchanged.
+
 ## v0.12.4 - Preview layout and theme readability
 
 - Wrapped long RenderIR headings to the available preview width.

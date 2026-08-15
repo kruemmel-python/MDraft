@@ -2,6 +2,17 @@
 #include <algorithm>
 
 namespace mtx {
+namespace {
+bool is_utf8_continuation(unsigned char c) noexcept {
+  return (c & 0xC0) == 0x80;
+}
+
+std::size_t next_codepoint_start(const std::string& s, std::size_t i, std::size_t end) noexcept {
+  i = std::min(i + 1, end);
+  while (i < end && is_utf8_continuation(static_cast<unsigned char>(s[i]))) ++i;
+  return i;
+}
+}
 
 GlyphMetricsTable::GlyphMetricsTable() { set_fixed_width(8); }
 
@@ -26,7 +37,9 @@ int GlyphMetricsTable::measure_bytes(const std::string& s, std::size_t begin, st
   if (begin > end) std::swap(begin, end);
   end = std::min(end, s.size());
   int x = 0;
-  for (std::size_t i = begin; i < end; ++i) x += width(static_cast<unsigned char>(s[i]));
+  for (std::size_t i = begin; i < end; ++i) {
+    if (!is_utf8_continuation(static_cast<unsigned char>(s[i]))) x += width(static_cast<unsigned char>(s[i]));
+  }
   return x;
 }
 
@@ -35,9 +48,13 @@ std::size_t GlyphMetricsTable::byte_at_x(const std::string& s, std::size_t begin
   end = std::min(end, s.size());
   int x = 0;
   for (std::size_t i = begin; i < end; ++i) {
-    const int w = width(static_cast<unsigned char>(s[i]));
+    const unsigned char c = static_cast<unsigned char>(s[i]);
+    if (is_utf8_continuation(c)) continue;
+    const int w = width(c);
     if (pixel_x < x + w / 2) return i;
     x += w;
+    const std::size_t next = next_codepoint_start(s, i, end);
+    if (pixel_x < x && next > i + 1) return next;
   }
   return end;
 }
