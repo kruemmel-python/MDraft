@@ -8,6 +8,7 @@ namespace mtx {
 
 const char* html_theme_id(HtmlTheme theme) noexcept {
   switch (theme) {
+    case HtmlTheme::GitHub: return "github";
     case HtmlTheme::Cyberpunk: return "cyberpunk";
     case HtmlTheme::Dystopia: return "dystopia";
     case HtmlTheme::Horror: return "horror";
@@ -19,6 +20,7 @@ const char* html_theme_id(HtmlTheme theme) noexcept {
 
 const char* html_theme_label(HtmlTheme theme) noexcept {
   switch (theme) {
+    case HtmlTheme::GitHub: return "GitHub";
     case HtmlTheme::Cyberpunk: return "Cyberpunk";
     case HtmlTheme::Dystopia: return "Dystopie";
     case HtmlTheme::Horror: return "Horror";
@@ -33,6 +35,7 @@ HtmlTheme html_theme_from_id(const std::string& id) noexcept {
   s.reserve(id.size());
   for (unsigned char c : id) s.push_back(static_cast<char>(std::tolower(c)));
   if (s == "cyberpunk" || s == "cyber") return HtmlTheme::Cyberpunk;
+  if (s == "github" || s == "gh" || s == "gfm") return HtmlTheme::GitHub;
   if (s == "dystopia" || s == "dystopie") return HtmlTheme::Dystopia;
   if (s == "horror") return HtmlTheme::Horror;
   if (s == "adventure" || s == "abenteuer" || s == "spannend" || s == "thriller") return HtmlTheme::Adventure;

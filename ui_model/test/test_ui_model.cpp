@@ -96,6 +96,8 @@ static void test_dispatchers_and_metrics() {
   assert(reg.find(mtx::CommandID::SaveAs) != nullptr);
   assert(reg.find(mtx::CommandID::TogglePreview) != nullptr);
   assert(reg.find(mtx::CommandID::TogglePreviewLock) != nullptr);
+  assert(reg.find(mtx::CommandID::ExportHtmlGitHub) != nullptr);
+  assert(reg.find(mtx::CommandID::PreviewThemeGitHub) != nullptr);
   assert(reg.find(mtx::CommandID::WorkspaceSearch) != nullptr);
   assert(reg.find(mtx::CommandID::WorkspaceSymbols) != nullptr);
   assert(reg.find(mtx::CommandID::ValidateLinks) != nullptr);

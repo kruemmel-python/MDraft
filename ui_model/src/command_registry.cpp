@@ -26,11 +26,13 @@ CommandRegistry::CommandRegistry() {
   add(CommandID::Save,       "Save",        "File/Save",        {'s', true, false, false});
   add(CommandID::SaveAs,     "Save As",     "File/Save As",     {0, false, false, false});
   add(CommandID::ExportHtml,          "Export HTML Standard", "File/Export HTML/Standard", {'e', true, false, false});
+  add(CommandID::ExportHtmlGitHub,    "GitHub",               "File/Export HTML/GitHub", {0, false, false, false});
   add(CommandID::ExportHtmlCyberpunk, "Cyberpunk",            "File/Export HTML/Cyberpunk", {0, false, false, false});
   add(CommandID::ExportHtmlDystopia,  "Dystopie",             "File/Export HTML/Dystopie", {0, false, false, false});
   add(CommandID::ExportHtmlHorror,    "Horror",               "File/Export HTML/Horror", {0, false, false, false});
   add(CommandID::ExportHtmlAdventure, "Abenteuer",            "File/Export HTML/Abenteuer", {0, false, false, false});
   add(CommandID::PreviewThemeStandard,  "Preview Standard",  "View/Preview Theme/Standard", {0, false, false, false});
+  add(CommandID::PreviewThemeGitHub,    "Preview GitHub",    "View/Preview Theme/GitHub", {0, false, false, false});
   add(CommandID::PreviewThemeCyberpunk, "Preview Cyberpunk", "View/Preview Theme/Cyberpunk", {0, false, false, false});
   add(CommandID::PreviewThemeDystopia,  "Preview Dystopie",  "View/Preview Theme/Dystopie", {0, false, false, false});
   add(CommandID::PreviewThemeHorror,    "Preview Horror",    "View/Preview Theme/Horror", {0, false, false, false});
@@ -81,11 +83,13 @@ std::string command_name(CommandID id) {
     case CommandID::Save: return "Save";
     case CommandID::SaveAs: return "Save As";
     case CommandID::ExportHtml: return "Export HTML Standard";
+    case CommandID::ExportHtmlGitHub: return "Export HTML GitHub";
     case CommandID::ExportHtmlCyberpunk: return "Export HTML Cyberpunk";
     case CommandID::ExportHtmlDystopia: return "Export HTML Dystopie";
     case CommandID::ExportHtmlHorror: return "Export HTML Horror";
     case CommandID::ExportHtmlAdventure: return "Export HTML Abenteuer";
     case CommandID::PreviewThemeStandard: return "Preview Theme Standard";
+    case CommandID::PreviewThemeGitHub: return "Preview Theme GitHub";
     case CommandID::PreviewThemeCyberpunk: return "Preview Theme Cyberpunk";
     case CommandID::PreviewThemeDystopia: return "Preview Theme Dystopie";
     case CommandID::PreviewThemeHorror: return "Preview Theme Horror";

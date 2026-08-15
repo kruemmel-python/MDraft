@@ -1,6 +1,6 @@
 # CMake/Windows ABI
 
-v0.12.5 nutzt CMake als primären Windows-Buildpfad für MDraft.
+v0.12.6 nutzt CMake als primären Windows-Buildpfad für MDraft.
 
 ## Targets
 

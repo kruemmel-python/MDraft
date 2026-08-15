@@ -3,7 +3,7 @@
 **Product:** MDraft — Native Markdown Workspace Editor  
 **Developer:** Ralf Krümmel
 
-Version: **v0.12.5**
+Version: **v0.12.6**
 
 ## 1. Datei-Workflow
 
@@ -29,6 +29,7 @@ Wenn ein Dokument noch keinen Pfad besitzt und du **Speichern** drückst, öffne
 ```text
 Ansicht
   RenderIR/HTML Live-Vorschau anzeigen    Ctrl+P
+  Preview-Thema GitHub                    Ansicht -> Preview-Thema -> GitHub
   Preview sperren                         Ctrl+Shift+P
   Preview-Thema
     Standard

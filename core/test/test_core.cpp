@@ -72,6 +72,20 @@ static void test_render_ir_svg_html() {
   const std::string html = mtx::render_html(md, mtx::HtmlTheme::Horror);
   assert(html.find("<svg") != std::string::npos);
   assert(html.find("MDraft RenderIR Export") != std::string::npos);
+
+  const mtx::DisplayList github = mtx::markdown_to_display_list(md, mtx::HtmlTheme::GitHub, 760);
+  assert(github.theme == mtx::HtmlTheme::GitHub);
+  assert(github.background.r == 255 && github.background.g == 255 && github.background.b == 255);
+  bool github_sans_heading = false;
+  for (const auto& cmd : github.commands) {
+    if (cmd.kind == mtx::DrawKind::Text && cmd.text == "Title" && cmd.face == mtx::TextFace::Sans) {
+      github_sans_heading = true;
+    }
+  }
+  assert(github_sans_heading);
+  const std::string github_html = mtx::render_html(md, mtx::HtmlTheme::GitHub);
+  assert(github_html.find("theme-github") != std::string::npos);
+  assert(github_html.find("Segoe UI") != std::string::npos);
 }
 
 static void test_preview_layout_wrap_and_contrast() {

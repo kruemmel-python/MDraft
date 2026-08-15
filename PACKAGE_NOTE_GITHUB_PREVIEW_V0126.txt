@@ -1,0 +1,9 @@
+MDraft v0.12.6 - GitHub-style Markdown preview
+
+Adds:
+- GitHub preview theme for README-style Markdown rendering.
+- GitHub HTML export path using the same RenderIR display list.
+- GitHub-like white document surface, content padding, heading scale, table borders, muted quote text and code block colors.
+- Sans-serif text rendering for GitHub prose/headings with monospace retained for code.
+
+The mode is available through Ansicht -> Preview-Thema -> GitHub and Datei -> Als HTML exportieren -> GitHub README-Stil.

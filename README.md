@@ -4,7 +4,7 @@
 **Native Markdown Workspace Editor**  
 **Developer:** Ralf Krümmel
 
-**MDraft v0.12.5**
+**MDraft v0.12.6**
 Codename: **Workspace Snippets Images**  
 Status: **Developer Preview / Stable Core**
 
@@ -30,7 +30,7 @@ Workspace Root
 ## Aktueller Funktionsumfang
 
 - Nativer Markdown-Editor mit Win32-Menü und Tastatursteuerung
-- RenderIR-basierte Live-Preview
+- RenderIR-basierte Live-Preview mit GitHub-README-Modus
 - Preview-Themen: Standard, Cyberpunk, Dystopie, Horror, Abenteuer
 - Preview-Locking
 - Preview-Scroll

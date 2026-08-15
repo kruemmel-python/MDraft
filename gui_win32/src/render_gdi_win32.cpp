@@ -58,6 +58,16 @@ void fill_rect_gdi(HDC hdc, int x, int y, int w, int h, Rgba c) {
   DeleteObject(br);
 }
 
+const wchar_t* gdi_font_family(TextFace face) noexcept {
+  switch (face) {
+    case TextFace::Sans:
+      return L"Segoe UI";
+    case TextFace::Monospace:
+    default:
+      return L"Consolas";
+  }
+}
+
 } // namespace
 
 void display_list_to_gdi(HDC hdc, const DisplayList& list, int origin_x, int origin_y) {
@@ -90,7 +100,9 @@ void display_list_to_gdi(HDC hdc, const DisplayList& list, int origin_x, int ori
                                  c.weight == TextWeight::Bold ? FW_BOLD : FW_NORMAL,
                                  FALSE, FALSE, FALSE, DEFAULT_CHARSET,
                                  OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
-                                 CLEARTYPE_QUALITY, FIXED_PITCH | FF_MODERN, L"Consolas");
+                                 CLEARTYPE_QUALITY,
+                                 c.face == TextFace::Sans ? (VARIABLE_PITCH | FF_SWISS) : (FIXED_PITCH | FF_MODERN),
+                                 gdi_font_family(c.face));
         HGDIOBJ old_font = SelectObject(hdc, font);
         SetTextColor(hdc, colorref(c.fill));
         SetBkMode(hdc, TRANSPARENT);

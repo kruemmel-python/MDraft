@@ -31,6 +31,8 @@ const char* css_id(HtmlTheme theme) {
 
 std::string root_background(HtmlTheme theme) {
   switch (theme) {
+    case HtmlTheme::GitHub:
+      return "#ffffff";
     case HtmlTheme::Cyberpunk:
       return "radial-gradient(circle at 15% 5%,rgba(255,43,214,.28),transparent 28rem),radial-gradient(circle at 85% 10%,rgba(0,245,255,.20),transparent 24rem),linear-gradient(180deg,#060014,#090018 48%,#02030a)";
     case HtmlTheme::Dystopia:
@@ -42,6 +44,16 @@ std::string root_background(HtmlTheme theme) {
     case HtmlTheme::Horror:
     default:
       return "radial-gradient(circle at 50% 0,rgba(138,3,3,.23),transparent 30rem),linear-gradient(180deg,#070404,#110707 60%,#020101)";
+  }
+}
+
+const char* svg_font_family(TextFace face) noexcept {
+  switch (face) {
+    case TextFace::Sans:
+      return "-apple-system, BlinkMacSystemFont, Segoe UI, Noto Sans, Helvetica, Arial, sans-serif";
+    case TextFace::Monospace:
+    default:
+      return "ui-monospace, SFMono-Regular, SF Mono, Consolas, Liberation Mono, Menlo, monospace";
   }
 }
 
@@ -83,7 +95,7 @@ std::string display_list_to_svg_html(const DisplayList& list) {
         break;
       case DrawKind::Text:
         o << "<text x=\"" << c.x << "\" y=\"" << (c.y + c.font_size) << "\" fill=\"" << rgb(c.fill)
-          << "\" font-family=\"Consolas, Cascadia Mono, Courier New, monospace\" font-size=\"" << c.font_size << "\"";
+          << "\" font-family=\"" << svg_font_family(c.face) << "\" font-size=\"" << c.font_size << "\"";
         if (c.weight == TextWeight::Bold) o << " font-weight=\"700\"";
         o << ">" << esc(c.text) << "</text>\n";
         break;

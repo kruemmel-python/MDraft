@@ -144,6 +144,10 @@ bool EditorRuntime::execute(CommandID id, bool& running) {
       export_html_theme(path_, buffer_, HtmlTheme::Standard, *this);
       return true;
 
+    case CommandID::ExportHtmlGitHub:
+      export_html_theme(path_, buffer_, HtmlTheme::GitHub, *this);
+      return true;
+
     case CommandID::ExportHtmlCyberpunk:
       export_html_theme(path_, buffer_, HtmlTheme::Cyberpunk, *this);
       return true;

@@ -655,6 +655,7 @@ void NativeWindowWin32::execute(CommandID id) {
 
   switch (id) {
     case CommandID::PreviewThemeStandard: set_preview_theme(HtmlTheme::Standard); return;
+    case CommandID::PreviewThemeGitHub: set_preview_theme(HtmlTheme::GitHub); return;
     case CommandID::PreviewThemeCyberpunk: set_preview_theme(HtmlTheme::Cyberpunk); return;
     case CommandID::PreviewThemeDystopia: set_preview_theme(HtmlTheme::Dystopia); return;
     case CommandID::PreviewThemeHorror: set_preview_theme(HtmlTheme::Horror); return;
@@ -1077,6 +1078,7 @@ void NativeWindowWin32::clamp_preview_scroll() noexcept {
 
 void NativeWindowWin32::sync_preview_theme_menu() {
   menu_.set_checked(CommandID::PreviewThemeStandard, preview_theme_ == HtmlTheme::Standard);
+  menu_.set_checked(CommandID::PreviewThemeGitHub, preview_theme_ == HtmlTheme::GitHub);
   menu_.set_checked(CommandID::PreviewThemeCyberpunk, preview_theme_ == HtmlTheme::Cyberpunk);
   menu_.set_checked(CommandID::PreviewThemeDystopia, preview_theme_ == HtmlTheme::Dystopia);
   menu_.set_checked(CommandID::PreviewThemeHorror, preview_theme_ == HtmlTheme::Horror);
@@ -1188,12 +1190,20 @@ void NativeWindowWin32::draw_render_preview(HDC hdc, int x0, int w) {
   const int viewport_bottom = std::max(viewport_top + 1, height_ - status_h - 8);
   const int viewport_h = viewport_bottom - viewport_top;
 
-  fill_rect(hdc, x0, 0, w, height_, RGB(7,4,4));
-  fill_rect(hdc, x0, 0, 1, height_, RGB(76,23,23));
-  fill_rect(hdc, x0 + 1, 0, w - 1, header_h, RGB(23,8,8));
+  const bool github_theme = preview_theme_ == HtmlTheme::GitHub;
+  const COLORREF preview_bg = github_theme ? RGB(255,255,255) : RGB(7,4,4);
+  const COLORREF preview_border = github_theme ? RGB(208,215,222) : RGB(76,23,23);
+  const COLORREF header_bg = github_theme ? RGB(246,248,250) : RGB(23,8,8);
+  const COLORREF header_fg = github_theme ? RGB(36,41,47) : RGB(234,223,218);
+  const COLORREF meta_fg = github_theme ? RGB(87,96,106) : RGB(162,143,139);
+  const COLORREF thumb = github_theme ? RGB(9,105,218) : RGB(208,24,24);
+
+  fill_rect(hdc, x0, 0, w, height_, preview_bg);
+  fill_rect(hdc, x0, 0, 1, height_, preview_border);
+  fill_rect(hdc, x0 + 1, 0, w - 1, header_h, header_bg);
   draw_text(hdc, x0 + 18, menu_h_ + 8,
             std::string("RenderIR/HTML Live-Vorschau · ") + html_theme_label(preview_theme_) + (preview_locked_ ? " · LOCKED" : ""),
-            RGB(234,223,218), RGB(23,8,8), false);
+            header_fg, header_bg, false);
 
   const int list_w = std::min(980, std::max(320, w - 72));
   const std::string preview_markdown = preview_markdown_source();
@@ -1211,7 +1221,7 @@ void NativeWindowWin32::draw_render_preview(HDC hdc, int x0, int w) {
     " hash=" + std::to_string(display_list_hash(list)) +
     " source=" + preview_source_label(),
     static_cast<std::size_t>(std::max(24, (w - 330) / std::max(1, char_w_))));
-  draw_text(hdc, x0 + 18, menu_h_ + 30, meta, RGB(162,143,139), RGB(23,8,8), false);
+  draw_text(hdc, x0 + 18, menu_h_ + 30, meta, meta_fg, header_bg, false);
 
   const int ox = x0 + std::max(20, (w - list.width - 16) / 2);
   const int oy = viewport_top - preview_scroll_y_;
@@ -1223,18 +1233,18 @@ void NativeWindowWin32::draw_render_preview(HDC hdc, int x0, int w) {
 
   const int track_x = x0 + w - 12;
   const int track_w = 6;
-  fill_rect(hdc, track_x, viewport_top, track_w, viewport_h, RGB(23,8,8));
+  fill_rect(hdc, track_x, viewport_top, track_w, viewport_h, header_bg);
   const int max_scroll = std::max(0, preview_content_h_ - viewport_h);
   if (max_scroll > 0) {
     const int thumb_h = std::max(28, (viewport_h * viewport_h) / std::max(viewport_h, preview_content_h_));
     const int thumb_y = viewport_top + ((viewport_h - thumb_h) * preview_scroll_y_) / max_scroll;
-    fill_rect(hdc, track_x, thumb_y, track_w, thumb_h, RGB(208,24,24));
+    fill_rect(hdc, track_x, thumb_y, track_w, thumb_h, thumb);
   } else {
-    fill_rect(hdc, track_x, viewport_top, track_w, viewport_h, RGB(76,23,23));
+    fill_rect(hdc, track_x, viewport_top, track_w, viewport_h, preview_border);
   }
 
   if (preview_focused_) {
-    fill_rect(hdc, x0 + 4, viewport_top, 3, viewport_h, RGB(208,24,24));
+    fill_rect(hdc, x0 + 4, viewport_top, 3, viewport_h, thumb);
   }
 }
 

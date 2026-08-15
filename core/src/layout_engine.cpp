@@ -24,10 +24,13 @@ struct ThemePalette {
   Rgba code_bg;
   Rgba code_text;
   Rgba quote_text;
+  bool github{false};
 };
 
 ThemePalette palette(HtmlTheme theme) {
   switch (theme) {
+    case HtmlTheme::GitHub:
+      return {{255,255,255,255},{255,255,255,255},{246,248,250,255},{36,41,47,255},{87,96,106,255},{9,105,218,255},{208,215,222,255},{246,248,250,255},{130,80,223,255},{36,41,47,255},{246,248,250,255},{36,41,47,255},{87,96,106,255},true};
     case HtmlTheme::Cyberpunk:
       return {{6,0,20,255},{10,0,28,255},{19,0,43,255},{232,251,255,255},{123,223,242,255},{255,43,214,255},{0,245,255,255},{19,0,43,255},{0,245,255,255},{255,255,255,255},{8,0,20,255},{232,251,255,255},{210,235,240,255}};
     case HtmlTheme::Dystopia:
@@ -266,14 +269,25 @@ std::string node_label(const std::string& raw) {
   return trim(label);
 }
 
-void add_text(DisplayList& dl, int x, int y, const std::string& text, Rgba color, int font, TextWeight w = TextWeight::Regular) {
-  dl.commands.push_back(make_text(x, y, text, color, font, w));
+TextFace body_face(const ThemePalette& p) noexcept {
+  return p.github ? TextFace::Sans : TextFace::Monospace;
+}
+
+void add_text(DisplayList& dl,
+              int x,
+              int y,
+              const std::string& text,
+              Rgba color,
+              int font,
+              TextWeight w = TextWeight::Regular,
+              TextFace face = TextFace::Monospace) {
+  dl.commands.push_back(make_text(x, y, text, color, font, w, face));
 }
 
 void add_paragraph(DisplayList& dl, int& y, const ThemePalette& p, const std::string& text, int x, int width) {
   const int max_chars = std::max(12, width / 10);
   for (const auto& line : wrap_text(strip_inline(text), max_chars)) {
-    add_text(dl, x, y, line, p.text, 16);
+    add_text(dl, x, y, line, p.text, 16, TextWeight::Regular, body_face(p));
     y += 24;
   }
   y += 8;
@@ -291,7 +305,7 @@ void add_heading(DisplayList& dl,
   const int approx_char_w = std::max(8, (font_size * 6) / 10);
   const int max_chars = std::max(10, width / approx_char_w);
   for (const auto& line : wrap_text(strip_inline(text), max_chars)) {
-    add_text(dl, x, y, line, p.heading, font_size, TextWeight::Bold);
+    add_text(dl, x, y, line, p.heading, font_size, TextWeight::Bold, body_face(p));
     y += line_h;
   }
   if (rule) {
@@ -332,7 +346,7 @@ void add_image_block(DisplayList& dl, int& y, const ThemePalette& p, const Image
   dl.commands.push_back(make_rect(x, y, width, h + 34, p.soft, p.border, 1));
   dl.commands.push_back(make_image(x + 12, y + 12, width - 24, h, resolved, ref.href, ref.alt, p.panel, p.border, 1));
   const std::string caption = ref.alt.empty() ? ref.href : ref.alt + " · " + ref.href;
-  add_text(dl, x + 12, y + h + 20, caption.substr(0, 96), p.muted, 13);
+  add_text(dl, x + 12, y + h + 20, caption.substr(0, 96), p.muted, 13, TextWeight::Regular, body_face(p));
   ++dl.image_count;
   y += h + 52;
 }
@@ -361,7 +375,7 @@ void add_table(DisplayList& dl, int& y, const ThemePalette& p, const std::vector
       const int max_chars = std::max(4, (col_w - 16) / 10);
       std::string shown = value;
       if (static_cast<int>(shown.size()) > max_chars) shown = shown.substr(0, static_cast<std::size_t>(max_chars - 1)) + "…";
-      add_text(dl, xx + 8, yy + 8, shown, p.text, 14, r == 0 ? TextWeight::Bold : TextWeight::Regular);
+      add_text(dl, xx + 8, yy + 8, shown, p.text, 14, r == 0 ? TextWeight::Bold : TextWeight::Regular, body_face(p));
     }
     dl.commands.push_back(make_line(x + col_w * static_cast<int>(cols), yy, x + col_w * static_cast<int>(cols), yy + row_h, p.border, 1));
   }
@@ -414,7 +428,7 @@ void add_mermaid(DisplayList& dl, int& y, const ThemePalette& p, const std::vect
     if (a >= 0 && b >= 0) edges.push_back({a, b, label});
   }
 
-  add_text(dl, x, y, "Mermaid-Diagramm", p.accent, 16, TextWeight::Bold);
+  add_text(dl, x, y, "Mermaid-Diagramm", p.accent, 16, TextWeight::Bold, body_face(p));
   y += 28;
   const int fig_h = std::max(150, std::min(260, 110 + static_cast<int>(nodes.size()) * 22));
   dl.commands.push_back(make_rect(x, y, width, fig_h, {11,3,3,255}, p.border, 1));
@@ -444,12 +458,12 @@ void add_mermaid(DisplayList& dl, int& y, const ThemePalette& p, const std::vect
     const int by = b.y + node_h / 2;
     dl.commands.push_back(make_line(ax, ay, bx, by, p.muted, 1));
     dl.commands.push_back(make_rect(bx - 3, by - 3, 6, 6, p.muted));
-    if (!e.label.empty()) add_text(dl, (ax + bx) / 2 - 40, (ay + by) / 2 - 22, e.label, p.text, 12);
+    if (!e.label.empty()) add_text(dl, (ax + bx) / 2 - 40, (ay + by) / 2 - 22, e.label, p.text, 12, TextWeight::Regular, body_face(p));
   }
 
   for (const auto& n : nodes) {
     dl.commands.push_back(make_rect(n.x, n.y, node_w, node_h, p.panel, p.accent, 1));
-    add_text(dl, n.x + 8, n.y + 7, n.label.substr(0, 12), p.text, 12);
+    add_text(dl, n.x + 8, n.y + 7, n.label.substr(0, 12), p.text, 12, TextWeight::Regular, body_face(p));
   }
 
   dl.mermaid_node_count += static_cast<int>(nodes.size());
@@ -504,14 +518,16 @@ DisplayList markdown_to_display_list_with_base(const std::string& markdown, Html
   dl.theme = theme;
   dl.background = p.bg;
 
-  int y = 0;
-  dl.commands.push_back(make_rect(0, 0, width, 32, p.bg));
-  y += 24;
-  dl.commands.push_back(make_rect(0, y, width, 1, p.border));
-  y += 18;
+  int y = p.github ? 32 : 0;
+  if (!p.github) {
+    dl.commands.push_back(make_rect(0, 0, width, 32, p.bg));
+    y += 24;
+    dl.commands.push_back(make_rect(0, y, width, 1, p.border));
+    y += 18;
+  }
 
-  const int x = 22;
-  const int content_w = width - 44;
+  const int x = p.github ? 32 : 22;
+  const int content_w = width - (p.github ? 64 : 44);
   const std::vector<std::string> lines = split_lines(markdown);
   bool in_code = false;
   bool in_mermaid = false;
@@ -605,17 +621,17 @@ DisplayList markdown_to_display_list_with_base(const std::string& markdown, Html
     }
     if (starts_with(t, "# ")) {
       flush_paragraph();
-      add_heading(dl, y, p, t.substr(2), x, content_w, 24, 32, true);
+      add_heading(dl, y, p, t.substr(2), x, content_w, p.github ? 32 : 24, p.github ? 40 : 32, true);
       continue;
     }
     if (starts_with(t, "## ")) {
       flush_paragraph();
-      add_heading(dl, y, p, t.substr(3), x, content_w, 20, 28, true);
+      add_heading(dl, y, p, t.substr(3), x, content_w, p.github ? 24 : 20, p.github ? 32 : 28, true);
       continue;
     }
     if (starts_with(t, "### ")) {
       flush_paragraph();
-      add_heading(dl, y, p, t.substr(4), x, content_w, 18, 26, false);
+      add_heading(dl, y, p, t.substr(4), x, content_w, p.github ? 20 : 18, p.github ? 28 : 26, false);
       continue;
     }
     if (starts_with(t, "- [x] ") || starts_with(t, "- [X] ")) {
@@ -641,7 +657,7 @@ DisplayList markdown_to_display_list_with_base(const std::string& markdown, Html
       dl.commands.push_back(make_rect(x + 8, y - 4, content_w - 8, h, p.soft));
       int yy = y;
       for (const auto& line : quote_lines) {
-        add_text(dl, x + 16, yy, line, p.quote_text, 16);
+        add_text(dl, x + 16, yy, line, p.quote_text, 16, TextWeight::Regular, body_face(p));
         yy += 24;
       }
       y += h + 6;
@@ -657,7 +673,7 @@ DisplayList markdown_to_display_list_with_base(const std::string& markdown, Html
   if (in_code && in_mermaid) add_mermaid(dl, y, p, fence, x, content_w);
   y += 24;
   dl.height = std::max(y, 200);
-  dl.commands.insert(dl.commands.begin(), make_rect(0, 0, width, dl.height, p.panel, p.border, 1));
+  dl.commands.insert(dl.commands.begin(), make_rect(0, 0, width, dl.height, p.panel, p.github ? p.panel : p.border, p.github ? 0 : 1));
   return dl;
 }
 

@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.12.6 - GitHub-style Markdown preview
+
+- Added a GitHub preview/export theme for README-style Markdown rendering.
+- Uses GitHub-like page width, white document surface, heading scale, borders and muted text colors.
+- Renders GitHub-mode prose/headings with a sans-serif UI font while keeping code blocks monospace.
+- Adds Win32 menu entries for GitHub preview and GitHub HTML export.
+
 ## v0.12.5 - Win32 UTF-8 editor rendering
 
 - Fixed Win32 editor rendering for German umlauts and other UTF-8 characters.

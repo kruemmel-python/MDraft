@@ -5,6 +5,7 @@ namespace mtx {
 
 enum class HtmlTheme {
   Standard,
+  GitHub,
   Cyberpunk,
   Dystopia,
   Horror,

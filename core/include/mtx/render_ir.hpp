@@ -25,6 +25,11 @@ enum class TextWeight {
   Bold
 };
 
+enum class TextFace {
+  Monospace,
+  Sans
+};
+
 struct DrawCommand {
   DrawKind kind{DrawKind::Rect};
   int x{0};
@@ -41,6 +46,7 @@ struct DrawCommand {
   std::string href;
   int font_size{16};
   TextWeight weight{TextWeight::Regular};
+  TextFace face{TextFace::Monospace};
 };
 
 struct DisplayList {
@@ -57,7 +63,13 @@ struct DisplayList {
 
 DrawCommand make_rect(int x, int y, int w, int h, Rgba fill, Rgba stroke = Rgba{}, int stroke_width = 0);
 DrawCommand make_line(int x1, int y1, int x2, int y2, Rgba stroke, int stroke_width = 1);
-DrawCommand make_text(int x, int y, std::string text, Rgba fill, int font_size = 16, TextWeight weight = TextWeight::Regular);
+DrawCommand make_text(int x,
+                      int y,
+                      std::string text,
+                      Rgba fill,
+                      int font_size = 16,
+                      TextWeight weight = TextWeight::Regular,
+                      TextFace face = TextFace::Monospace);
 DrawCommand make_image(int x, int y, int w, int h, std::string path, std::string href, std::string alt, Rgba fill, Rgba stroke, int stroke_width = 1);
 
 std::uint64_t display_list_hash(const DisplayList& list);

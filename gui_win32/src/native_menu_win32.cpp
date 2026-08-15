@@ -42,11 +42,13 @@ UINT NativeMenuWin32::win_id(CommandID id) noexcept {
     case CommandID::Save: return 1001u;
     case CommandID::SaveAs: return 1008u;
     case CommandID::ExportHtml: return 1002u;
+    case CommandID::ExportHtmlGitHub: return 10010u;
     case CommandID::ExportHtmlCyberpunk: return 1004u;
     case CommandID::ExportHtmlDystopia: return 1005u;
     case CommandID::ExportHtmlHorror: return 1006u;
     case CommandID::ExportHtmlAdventure: return 1007u;
     case CommandID::PreviewThemeStandard: return 1210u;
+    case CommandID::PreviewThemeGitHub: return 1215u;
     case CommandID::PreviewThemeCyberpunk: return 1211u;
     case CommandID::PreviewThemeDystopia: return 1212u;
     case CommandID::PreviewThemeHorror: return 1213u;
@@ -84,11 +86,13 @@ CommandID NativeMenuWin32::command_id(UINT id) noexcept {
     case 1001u: return CommandID::Save;
     case 1008u: return CommandID::SaveAs;
     case 1002u: return CommandID::ExportHtml;
+    case 10010u: return CommandID::ExportHtmlGitHub;
     case 1004u: return CommandID::ExportHtmlCyberpunk;
     case 1005u: return CommandID::ExportHtmlDystopia;
     case 1006u: return CommandID::ExportHtmlHorror;
     case 1007u: return CommandID::ExportHtmlAdventure;
     case 1210u: return CommandID::PreviewThemeStandard;
+    case 1215u: return CommandID::PreviewThemeGitHub;
     case 1211u: return CommandID::PreviewThemeCyberpunk;
     case 1212u: return CommandID::PreviewThemeDystopia;
     case 1213u: return CommandID::PreviewThemeHorror;
@@ -150,6 +154,7 @@ void NativeMenuWin32::attach(HWND hwnd, const CommandRegistry& registry) {
   append_separator(file);
   HMENU html = CreatePopupMenu();
   append_command(html, registry, CommandID::ExportHtml, L"&Standard");
+  append_command(html, registry, CommandID::ExportHtmlGitHub, L"&GitHub README-Stil");
   append_command(html, registry, CommandID::ExportHtmlCyberpunk, L"&Cyberpunk-Stil");
   append_command(html, registry, CommandID::ExportHtmlDystopia, L"&Dystopie-Stil");
   append_command(html, registry, CommandID::ExportHtmlHorror, L"&Horror-Stil");
@@ -175,6 +180,7 @@ void NativeMenuWin32::attach(HWND hwnd, const CommandRegistry& registry) {
 
   HMENU preview_theme = CreatePopupMenu();
   append_command(preview_theme, registry, CommandID::PreviewThemeStandard, L"&Standard");
+  append_command(preview_theme, registry, CommandID::PreviewThemeGitHub, L"&GitHub");
   append_command(preview_theme, registry, CommandID::PreviewThemeCyberpunk, L"&Cyberpunk");
   append_command(preview_theme, registry, CommandID::PreviewThemeDystopia, L"&Dystopie");
   append_command(preview_theme, registry, CommandID::PreviewThemeHorror, L"&Horror");

@@ -3,15 +3,15 @@
 **Product:** MDraft — Native Markdown Workspace Editor  
 **Developer:** Ralf Krümmel
 
-Version: **v0.12.5**
+Version: **v0.12.6**
 
 | Bereich | Status | Substrat | Hinweise |
 |---|---:|---|---|
 | Nativer Editor | Stabiler Kern | runtime + ui_model + gui_win32 | Win32-UI, GapBuffer, Auswahl, Cursor |
 | Datei öffnen | Aktiv | runtime + gui_win32 | GetOpenFileNameW |
 | Speichern / Speichern unter | Aktiv | runtime + io + gui_win32 | atomisches Schreiben, SaveAs-Fallback |
-| Theme-Export | Aktiv | core/html + RenderIR | Standard, Cyberpunk, Dystopie, Horror, Abenteuer |
-| Live Preview | Aktiv | RenderIR + GDI | gleiche DisplayList wie Export |
+| Theme-Export | Aktiv | core/html + RenderIR | Standard, GitHub, Cyberpunk, Dystopie, Horror, Abenteuer |
+| Live Preview | Aktiv | RenderIR + GDI | GitHub-README-Modus plus Theme-Preview |
 | Preview-Locking | Aktiv | gui_win32 PreviewState | Snapshot-Preview |
 | Preview-Scroll | Aktiv | DisplayList height | eigener Scrollzustand |
 | RenderIR | Aktiv | core/render_ir | Rect, Line, Text, Image |

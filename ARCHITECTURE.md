@@ -3,7 +3,7 @@
 **Product:** MDraft — Native Markdown Workspace Editor  
 **Developer:** Ralf Krümmel
 
-Version: **v0.12.5**
+Version: **v0.12.6**
 Codename: **Workspace Snippets Images**
 
 ## 1. Kern des Projekts

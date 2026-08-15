@@ -29,7 +29,7 @@ DrawCommand make_line(int x1, int y1, int x2, int y2, Rgba stroke, int stroke_wi
   return c;
 }
 
-DrawCommand make_text(int x, int y, std::string text, Rgba fill, int font_size, TextWeight weight) {
+DrawCommand make_text(int x, int y, std::string text, Rgba fill, int font_size, TextWeight weight, TextFace face) {
   DrawCommand c;
   c.kind = DrawKind::Text;
   c.x = x;
@@ -38,6 +38,7 @@ DrawCommand make_text(int x, int y, std::string text, Rgba fill, int font_size, 
   c.fill = fill;
   c.font_size = font_size;
   c.weight = weight;
+  c.face = face;
   return c;
 }
 
@@ -79,6 +80,7 @@ std::uint64_t display_list_hash(const DisplayList& list) {
     mix(h, static_cast<std::uint64_t>(c.h));
     mix(h, static_cast<std::uint64_t>(c.x2));
     mix(h, static_cast<std::uint64_t>(c.y2));
+    mix(h, static_cast<std::uint64_t>(c.face));
     mix(h, static_cast<std::uint64_t>(c.fill.r) << 24 | static_cast<std::uint64_t>(c.fill.g) << 16 |
            static_cast<std::uint64_t>(c.fill.b) << 8 | c.fill.a);
     mix(h, static_cast<std::uint64_t>(c.stroke.r) << 24 | static_cast<std::uint64_t>(c.stroke.g) << 16 |
