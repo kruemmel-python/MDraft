@@ -4,6 +4,10 @@
 #include <stdexcept>
 #include <utility>
 
+#ifndef MDRAFT_VERSION
+#define MDRAFT_VERSION "0.0.0-dev"
+#endif
+
 namespace mtx {
 
 EditorRuntime::EditorRuntime(GapBuffer& buffer,
@@ -173,7 +177,7 @@ bool EditorRuntime::execute(CommandID id, bool& running) {
       return true;
 
     case CommandID::About:
-      mark_status("MDraft v0.12.3 - native workspace editor");
+      mark_status(std::string("MDraft v") + MDRAFT_VERSION + " - native workspace editor");
       return true;
 
     case CommandID::Copy:

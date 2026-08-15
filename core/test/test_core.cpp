@@ -74,6 +74,43 @@ static void test_render_ir_svg_html() {
   assert(html.find("MDraft RenderIR Export") != std::string::npos);
 }
 
+static void test_preview_layout_wrap_and_contrast() {
+  const std::string long_title =
+    "PlayerLog NG 2.0.0 - bebilderte Ingame-Anleitung fuer Operatoren mit sehr langer Ueberschrift";
+  const std::string md =
+    "# " + long_title + "\n\n"
+    "1. Im Spiel den Chat oeffnen.\n"
+    "2. Den Befehl einschliesslich des fuehrenden `/` eingeben.\n"
+    "3. Mit Enter absenden.\n\n"
+    "## Pruefen, ob PlayerLog NG aktiv ist\n\n"
+    "```text\n"
+    "/plugins\n"
+    "```\n";
+
+  const mtx::DisplayList list = mtx::markdown_to_display_list(md, mtx::HtmlTheme::Standard, 420);
+  int h1_lines = 0;
+  bool heading_contrast_ok = true;
+  bool first_item_seen = false;
+  bool second_item_seen = false;
+
+  for (const auto& cmd : list.commands) {
+    if (cmd.kind != mtx::DrawKind::Text) continue;
+    if (cmd.weight == mtx::TextWeight::Bold && cmd.font_size >= 20) {
+      if (long_title.find(cmd.text) != std::string::npos) ++h1_lines;
+      if (cmd.fill.r > 240 && cmd.fill.g > 240 && cmd.fill.b > 240) heading_contrast_ok = false;
+      const int estimated_right = cmd.x + static_cast<int>(cmd.text.size()) * std::max(8, (cmd.font_size * 6) / 10);
+      assert(estimated_right <= list.width + 8);
+    }
+    if (cmd.text.find("Im Spiel den Chat") != std::string::npos) first_item_seen = true;
+    if (cmd.text.find("Den Befehl") != std::string::npos) second_item_seen = true;
+  }
+
+  assert(h1_lines >= 2);
+  assert(heading_contrast_ok);
+  assert(first_item_seen);
+  assert(second_item_seen);
+}
+
 static void test_command_manager_undo_redo() {
   mtx::GapBuffer b("ab");
   mtx::CommandManager cm;
@@ -111,6 +148,7 @@ static void test_command_manager_smart_newline() {
 int main() {
   test_gap_and_markdown();
   test_render_ir_svg_html();
+  test_preview_layout_wrap_and_contrast();
   test_command_manager_undo_redo();
   test_command_manager_smart_newline();
   std::cout << "core ok\n";

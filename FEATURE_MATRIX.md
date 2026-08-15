@@ -3,7 +3,7 @@
 **Product:** MDraft — Native Markdown Workspace Editor  
 **Developer:** Ralf Krümmel
 
-Version: **v0.12.3**
+Version: **v0.12.4**
 
 | Bereich | Status | Substrat | Hinweise |
 |---|---:|---|---|

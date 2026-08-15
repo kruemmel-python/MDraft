@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.12.4 - Preview layout and theme readability
+
+- Wrapped long RenderIR headings to the available preview width.
+- Rebalanced heading, code and quote colors across Standard, Cyberpunk, Dystopia, Horror and Adventure themes.
+- Kept numbered Markdown list items visually separated in the RenderIR preview instead of merging them into one paragraph.
+- Truncated the Win32 preview metadata line so it no longer overlaps the theme status badge.
+- Moved Win32/X11/About version strings to the CMake-provided `MDRAFT_VERSION` definition.
+
 ## v0.12.3 - Enterprise repository consolidation
 
 - Consolidated the public product identity from MarkTeX Native to MDraft.

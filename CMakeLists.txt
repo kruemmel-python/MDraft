@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.21)
 
 project(mdraft_native_cpp
-  VERSION 0.12.3
+  VERSION 0.12.4
   LANGUAGES CXX
 )
 
@@ -91,6 +91,7 @@ target_include_directories(mdraft_runtime PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}/io/include
   ${CMAKE_CURRENT_SOURCE_DIR}/ui_model/include
 )
+target_compile_definitions(mdraft_runtime PRIVATE MDRAFT_VERSION="${PROJECT_VERSION}")
 target_link_libraries(mdraft_runtime PUBLIC mdraft_core mdraft_io mdraft_ui_model)
 
 add_library(mdraft_workspace STATIC ${MDRAFT_WORKSPACE_SOURCES})
@@ -108,6 +109,7 @@ target_include_directories(mdraft-cli PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/term/include
 )
 target_link_libraries(mdraft-cli PRIVATE mdraft_core mdraft_io)
+target_compile_definitions(mdraft-cli PRIVATE MDRAFT_VERSION="${PROJECT_VERSION}")
 
 if(WIN32)
   add_executable(mdraft-win32 WIN32
@@ -126,6 +128,7 @@ if(WIN32)
     _UNICODE
     NOMINMAX
     WIN32_LEAN_AND_MEAN
+    MDRAFT_VERSION="${PROJECT_VERSION}"
   )
   target_link_libraries(mdraft-win32 PRIVATE
     mdraft_core
@@ -142,7 +145,7 @@ if(WIN32)
 
   install(TARGETS mdraft-win32 RUNTIME DESTINATION .)
   install(TARGETS mdraft-cli RUNTIME DESTINATION bin)
-  install(FILES README.md ARCHITECTURE.md USER_GUIDE.md CHANGELOG.md FEATURE_MATRIX.md PACKAGE_NOTE_PRODUCT_CONSOLIDATION.txt PACKAGE_NOTE_MDRAFT_RENAME.txt DESTINATION .)
+  install(FILES README.md ARCHITECTURE.md USER_GUIDE.md CHANGELOG.md FEATURE_MATRIX.md PACKAGE_NOTE_PRODUCT_CONSOLIDATION.txt PACKAGE_NOTE_MDRAFT_RENAME.txt PACKAGE_NOTE_PREVIEW_LAYOUT_V0124.txt DESTINATION .)
 
   set(CPACK_GENERATOR "WIX")
   set(CPACK_PACKAGE_NAME "MDraft")
@@ -176,6 +179,7 @@ if(UNIX AND NOT APPLE)
       mdraft_runtime
       ${X11_LIBRARIES}
     )
+    target_compile_definitions(mdraft-x11 PRIVATE MDRAFT_VERSION="${PROJECT_VERSION}")
   endif()
 endif()
 

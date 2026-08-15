@@ -1,0 +1,10 @@
+MDraft v0.12.4 - Preview layout and readability
+
+Fixes:
+- Long H1/H2/H3 headings wrap inside the RenderIR preview instead of being clipped at the right edge.
+- Standard and Adventure themes use high-contrast heading colors.
+- Code and quote blocks use theme-specific readable colors.
+- Numbered Markdown list items stay visually separated in the preview.
+- The Win32 preview metadata line is truncated before it reaches the theme badge.
+
+The fix is in the RenderIR layout layer, so both the Win32 live preview and SVG/HTML export benefit from the same behavior.

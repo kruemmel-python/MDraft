@@ -20,6 +20,10 @@
 #include <filesystem>
 #include <stdexcept>
 
+#ifndef MDRAFT_VERSION
+#define MDRAFT_VERSION "0.0.0-dev"
+#endif
+
 namespace mtx {
 namespace {
 const wchar_t* kClassName = L"MDraftNativeWin32Window";
@@ -91,6 +95,14 @@ std::pair<std::size_t, std::size_t> word_bounds_for_snippet(const std::string& t
   return {b, e};
 }
 
+std::string truncate_middle(const std::string& text, std::size_t max_chars) {
+  if (text.size() <= max_chars) return text;
+  if (max_chars < 12) return text.substr(0, max_chars);
+  const std::size_t head = (max_chars - 3) / 2;
+  const std::size_t tail = max_chars - 3 - head;
+  return text.substr(0, head) + "..." + text.substr(text.size() - tail);
+}
+
 COLORREF style_fg(TextStyle s) {
   if (has_style(s, TextStyle::Quote)) return RGB(0,128,0);
   if (has_style(s, TextStyle::Math)) return RGB(107,35,142);
@@ -117,7 +129,8 @@ NativeWindowWin32::NativeWindowWin32(int w, int h) : width_(w), height_(h), inpu
   wc.hbrBackground = reinterpret_cast<HBRUSH>(COLOR_WINDOW + 1);
   RegisterClassW(&wc);
 
-  hwnd_ = CreateWindowExW(0, kClassName, L"MDraft Win32 - v0.12.3",
+  const std::wstring title = widen(std::string("MDraft Win32 - v") + MDRAFT_VERSION);
+  hwnd_ = CreateWindowExW(0, kClassName, title.c_str(),
                           WS_OVERLAPPEDWINDOW | WS_VISIBLE,
                           CW_USEDEFAULT, CW_USEDEFAULT, width_, height_,
                           nullptr, nullptr, inst, this);
@@ -1155,20 +1168,22 @@ void NativeWindowWin32::draw_render_preview(HDC hdc, int x0, int w) {
             std::string("RenderIR/HTML Live-Vorschau · ") + html_theme_label(preview_theme_) + (preview_locked_ ? " · LOCKED" : ""),
             RGB(234,223,218), RGB(23,8,8), false);
 
-  const int list_w = std::min(760, std::max(320, w - 56));
+  const int list_w = std::min(980, std::max(320, w - 72));
   const std::string preview_markdown = preview_markdown_source();
   const std::string preview_base = preview_locked_ ? locked_preview_path_ : runtime_->path();
   DisplayList list = markdown_to_display_list_with_base(preview_markdown, preview_theme_, list_w, preview_base);
   preview_content_h_ = list.height + 20;
   clamp_preview_scroll();
 
-  const std::string meta = "commands=" + std::to_string(list.commands.size()) +
-                           " math=" + std::to_string(list.math_box_count) +
-                           " mermaid=" + std::to_string(list.mermaid_node_count) + "/" +
-                           std::to_string(list.mermaid_edge_count) +
-                           " scroll=" + std::to_string(preview_scroll_y_) +
-                           " hash=" + std::to_string(display_list_hash(list)) +
-                           " source=" + preview_source_label();
+  const std::string meta = truncate_middle(
+    "commands=" + std::to_string(list.commands.size()) +
+    " math=" + std::to_string(list.math_box_count) +
+    " mermaid=" + std::to_string(list.mermaid_node_count) + "/" +
+    std::to_string(list.mermaid_edge_count) +
+    " scroll=" + std::to_string(preview_scroll_y_) +
+    " hash=" + std::to_string(display_list_hash(list)) +
+    " source=" + preview_source_label(),
+    static_cast<std::size_t>(std::max(24, (w - 330) / std::max(1, char_w_))));
   draw_text(hdc, x0 + 18, menu_h_ + 30, meta, RGB(162,143,139), RGB(23,8,8), false);
 
   const int ox = x0 + std::max(20, (w - list.width - 16) / 2);

@@ -20,21 +20,25 @@ struct ThemePalette {
   Rgba border;
   Rgba math_bg;
   Rgba math_text;
+  Rgba heading;
+  Rgba code_bg;
+  Rgba code_text;
+  Rgba quote_text;
 };
 
 ThemePalette palette(HtmlTheme theme) {
   switch (theme) {
     case HtmlTheme::Cyberpunk:
-      return {{6,0,20,255},{10,0,28,255},{19,0,43,255},{232,251,255,255},{123,223,242,255},{255,43,214,255},{0,245,255,255},{19,0,43,255},{0,245,255,255}};
+      return {{6,0,20,255},{10,0,28,255},{19,0,43,255},{232,251,255,255},{123,223,242,255},{255,43,214,255},{0,245,255,255},{19,0,43,255},{0,245,255,255},{255,255,255,255},{8,0,20,255},{232,251,255,255},{210,235,240,255}};
     case HtmlTheme::Dystopia:
-      return {{21,19,15,255},{33,31,25,255},{26,24,20,255},{216,210,191,255},{155,146,126,255},{211,155,70,255},{74,67,55,255},{17,16,13,255},{227,196,130,255}};
+      return {{21,19,15,255},{33,31,25,255},{26,24,20,255},{216,210,191,255},{155,146,126,255},{211,155,70,255},{74,67,55,255},{17,16,13,255},{227,196,130,255},{255,246,229,255},{10,8,7,255},{240,223,184,255},{210,202,180,255}};
     case HtmlTheme::Adventure:
-      return {{247,234,208,255},{255,247,223,255},{255,240,200,255},{31,43,33,255},{91,104,78,255},{31,111,91,255},{184,138,59,255},{240,223,184,255},{92,59,18,255}};
+      return {{247,234,208,255},{255,247,223,255},{255,240,200,255},{31,43,33,255},{91,104,78,255},{31,111,91,255},{184,138,59,255},{240,223,184,255},{92,59,18,255},{69,50,20,255},{31,24,17,255},{255,247,223,255},{75,62,43,255}};
     case HtmlTheme::Standard:
-      return {{255,255,255,255},{255,255,255,255},{246,248,250,255},{36,41,47,255},{87,96,106,255},{9,105,218,255},{208,215,222,255},{246,248,250,255},{130,80,223,255}};
+      return {{255,255,255,255},{255,255,255,255},{246,248,250,255},{36,41,47,255},{87,96,106,255},{9,105,218,255},{208,215,222,255},{246,248,250,255},{130,80,223,255},{24,49,83,255},{13,17,23,255},{246,248,250,255},{87,96,106,255}};
     case HtmlTheme::Horror:
     default:
-      return {{7,4,4,255},{14,7,7,255},{18,9,9,255},{234,223,218,255},{162,143,139,255},{208,24,24,255},{76,23,23,255},{246,248,250,255},{130,80,223,255}};
+      return {{7,4,4,255},{14,7,7,255},{18,9,9,255},{234,223,218,255},{162,143,139,255},{208,24,24,255},{76,23,23,255},{246,248,250,255},{130,80,223,255},{255,241,238,255},{11,3,3,255},{255,214,207,255},{218,194,188,255}};
   }
 }
 
@@ -105,6 +109,15 @@ std::vector<std::string> wrap_text(const std::string& text, int max_chars) {
   std::string word;
   std::string line;
   while (is >> word) {
+    while (static_cast<int>(word.size()) > max_chars) {
+      const std::string chunk = word.substr(0, static_cast<std::size_t>(max_chars));
+      word.erase(0, static_cast<std::size_t>(max_chars));
+      if (!line.empty()) {
+        out.push_back(line);
+        line.clear();
+      }
+      out.push_back(chunk);
+    }
     if (!line.empty() && static_cast<int>(line.size() + 1 + word.size()) > max_chars) {
       out.push_back(line);
       line.clear();
@@ -264,6 +277,39 @@ void add_paragraph(DisplayList& dl, int& y, const ThemePalette& p, const std::st
     y += 24;
   }
   y += 8;
+}
+
+void add_heading(DisplayList& dl,
+                 int& y,
+                 const ThemePalette& p,
+                 const std::string& text,
+                 int x,
+                 int width,
+                 int font_size,
+                 int line_h,
+                 bool rule) {
+  const int approx_char_w = std::max(8, (font_size * 6) / 10);
+  const int max_chars = std::max(10, width / approx_char_w);
+  for (const auto& line : wrap_text(strip_inline(text), max_chars)) {
+    add_text(dl, x, y, line, p.heading, font_size, TextWeight::Bold);
+    y += line_h;
+  }
+  if (rule) {
+    dl.commands.push_back(make_line(x, y, x + width, y, p.border, 1));
+    y += 14;
+  } else {
+    y += 6;
+  }
+}
+
+bool ordered_list_body(const std::string& t, std::string& body) {
+  std::size_t i = 0;
+  while (i < t.size() && std::isdigit(static_cast<unsigned char>(t[i]))) ++i;
+  if (i == 0 || i + 1 >= t.size() || t[i] != '.' || !std::isspace(static_cast<unsigned char>(t[i + 1]))) {
+    return false;
+  }
+  body = trim(t.substr(i + 1));
+  return !body.empty();
 }
 
 void add_math_block(DisplayList& dl, int& y, const ThemePalette& p, const std::vector<std::string>& lines, int x, int width) {
@@ -495,15 +541,16 @@ DisplayList markdown_to_display_list_with_base(const std::string& markdown, Html
           add_mermaid(dl, y, p, fence, x, content_w);
         } else {
           std::vector<std::string> wrapped_fence;
+          const int code_max_chars = std::max(24, (content_w - 20) / 9);
           for (const auto& l : fence) {
-            auto wrapped = wrap_code_line(l, 80);
+            auto wrapped = wrap_code_line(l, code_max_chars);
             wrapped_fence.insert(wrapped_fence.end(), wrapped.begin(), wrapped.end());
           }
           const int h = std::max(34, 12 + static_cast<int>(wrapped_fence.size()) * 22);
-          dl.commands.push_back(make_rect(x, y, content_w, h, {11,3,3,255}, p.border, 1));
+          dl.commands.push_back(make_rect(x, y, content_w, h, p.code_bg, p.border, 1));
           int yy = y + 8;
           for (const auto& l : wrapped_fence) {
-            add_text(dl, x + 10, yy, l, {255,214,207,255}, 14);
+            add_text(dl, x + 10, yy, l, p.code_text, 14);
             yy += 22;
           }
           y += h + 16;
@@ -558,24 +605,17 @@ DisplayList markdown_to_display_list_with_base(const std::string& markdown, Html
     }
     if (starts_with(t, "# ")) {
       flush_paragraph();
-      add_text(dl, x, y, strip_inline(t.substr(2)), {255,241,238,255}, 24, TextWeight::Bold);
-      y += 34;
-      dl.commands.push_back(make_line(x, y, x + content_w, y, p.border, 1));
-      y += 16;
+      add_heading(dl, y, p, t.substr(2), x, content_w, 24, 32, true);
       continue;
     }
     if (starts_with(t, "## ")) {
       flush_paragraph();
-      add_text(dl, x, y, strip_inline(t.substr(3)), {255,232,226,255}, 20, TextWeight::Bold);
-      y += 30;
-      dl.commands.push_back(make_line(x, y, x + content_w, y, p.border, 1));
-      y += 14;
+      add_heading(dl, y, p, t.substr(3), x, content_w, 20, 28, true);
       continue;
     }
     if (starts_with(t, "### ")) {
       flush_paragraph();
-      add_text(dl, x, y, strip_inline(t.substr(4)), {255,210,210,255}, 18, TextWeight::Bold);
-      y += 30;
+      add_heading(dl, y, p, t.substr(4), x, content_w, 18, 26, false);
       continue;
     }
     if (starts_with(t, "- [x] ") || starts_with(t, "- [X] ")) {
@@ -587,6 +627,10 @@ DisplayList markdown_to_display_list_with_base(const std::string& markdown, Html
     if (starts_with(t, "- ") || starts_with(t, "* ")) {
       flush_paragraph(); add_paragraph(dl, y, p, "• " + t.substr(2), x + 18, content_w - 18); continue;
     }
+    std::string ordered_body;
+    if (ordered_list_body(t, ordered_body)) {
+      flush_paragraph(); add_paragraph(dl, y, p, "• " + ordered_body, x + 18, content_w - 18); continue;
+    }
     if (starts_with(t, ">")) {
       flush_paragraph();
       const std::string quote_text = strip_inline(trim(t.substr(1)));
@@ -597,7 +641,7 @@ DisplayList markdown_to_display_list_with_base(const std::string& markdown, Html
       dl.commands.push_back(make_rect(x + 8, y - 4, content_w - 8, h, p.soft));
       int yy = y;
       for (const auto& line : quote_lines) {
-        add_text(dl, x + 16, yy, line, {200,170,165,255}, 16);
+        add_text(dl, x + 16, yy, line, p.quote_text, 16);
         yy += 24;
       }
       y += h + 6;
