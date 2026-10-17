@@ -10,6 +10,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 option(MDRAFT_BUILD_TESTS "Build MDraft tests" ON)
+option(MDRAFT_BUILD_CLI "Build the optional command-line utility" OFF)
 
 if(MSVC)
   add_compile_options(/W4 /WX /permissive- /Zc:__cplusplus /utf-8 /EHsc /DNOMINMAX /DWIN32_LEAN_AND_MEAN)
@@ -101,36 +102,36 @@ target_include_directories(mdraft_workspace PUBLIC
 )
 target_link_libraries(mdraft_workspace PUBLIC mdraft_io)
 
-add_executable(mdraft-cli
-  app/src/main.cpp
-)
-target_include_directories(mdraft-cli PRIVATE
-  ${MDRAFT_INCLUDE_DIRS}
-  ${CMAKE_CURRENT_SOURCE_DIR}/term/include
-)
-target_link_libraries(mdraft-cli PRIVATE mdraft_core mdraft_io)
-target_compile_definitions(mdraft-cli PRIVATE MDRAFT_VERSION="${PROJECT_VERSION}")
+if(MDRAFT_BUILD_CLI)
+  add_executable(mdraft-cli app/src/main.cpp)
+  target_include_directories(mdraft-cli PRIVATE
+    ${MDRAFT_INCLUDE_DIRS}
+    ${CMAKE_CURRENT_SOURCE_DIR}/term/include
+  )
+  target_link_libraries(mdraft-cli PRIVATE mdraft_core mdraft_io)
+  target_compile_definitions(mdraft-cli PRIVATE MDRAFT_VERSION="${PROJECT_VERSION}")
+endif()
 
 if(WIN32)
-  add_executable(mdraft-win32 WIN32
+  add_executable(mdraft WIN32
     gui_win32/src/native_menu_win32.cpp
     gui_win32/src/native_window_win32.cpp
     gui_win32/src/render_gdi_win32.cpp
     gui_win32/src/win32_clipboard_bridge.cpp
     app/src/gui_win32_main.cpp
   )
-  target_include_directories(mdraft-win32 PRIVATE
+  target_include_directories(mdraft PRIVATE
     ${MDRAFT_INCLUDE_DIRS}
     ${CMAKE_CURRENT_SOURCE_DIR}/gui_win32/include
   )
-  target_compile_definitions(mdraft-win32 PRIVATE
+  target_compile_definitions(mdraft PRIVATE
     UNICODE
     _UNICODE
     NOMINMAX
     WIN32_LEAN_AND_MEAN
     MDRAFT_VERSION="${PROJECT_VERSION}"
   )
-  target_link_libraries(mdraft-win32 PRIVATE
+  target_link_libraries(mdraft PRIVATE
     mdraft_core
     mdraft_io
     mdraft_ui_model
@@ -143,8 +144,10 @@ if(WIN32)
     gdiplus
   )
 
-  install(TARGETS mdraft-win32 RUNTIME DESTINATION .)
-  install(TARGETS mdraft-cli RUNTIME DESTINATION bin)
+  install(TARGETS mdraft RUNTIME DESTINATION .)
+  if(MDRAFT_BUILD_CLI)
+    install(TARGETS mdraft-cli RUNTIME DESTINATION bin)
+  endif()
   install(FILES README.md ARCHITECTURE.md USER_GUIDE.md CHANGELOG.md FEATURE_MATRIX.md PACKAGE_NOTE_PRODUCT_CONSOLIDATION.txt PACKAGE_NOTE_MDRAFT_RENAME.txt PACKAGE_NOTE_PREVIEW_LAYOUT_V0124.txt PACKAGE_NOTE_WIN32_UTF8_RENDERING_V0125.txt PACKAGE_NOTE_GITHUB_PREVIEW_V0126.txt DESTINATION .)
 
   set(CPACK_GENERATOR "WIX")
@@ -155,31 +158,32 @@ if(WIN32)
   set(CPACK_PACKAGE_INSTALL_DIRECTORY "MDraft")
   set(CPACK_WIX_INSTALL_SCOPE "perMachine")
   set(CPACK_WIX_PROGRAM_MENU_FOLDER ".")
-  set(CPACK_PACKAGE_EXECUTABLES "mdraft-win32" "MDraft")
+  set(CPACK_PACKAGE_EXECUTABLES "mdraft" "MDraft")
   set(CPACK_WIX_UPGRADE_GUID "B4FD8460-2E0A-4DFD-A32F-6F22B5223CE9")
   include(CPack)
 endif()
 
-if(UNIX AND NOT APPLE)
-  find_package(X11)
+if(UNIX AND NOT APPLE AND NOT ANDROID)
+  find_package(X11 REQUIRED)
   if(X11_FOUND)
-    add_executable(mdraft-x11
+    add_executable(mdraft
       gui_x11/src/native_window_x11.cpp
       app/src/gui_x11_main.cpp
     )
-    target_include_directories(mdraft-x11 PRIVATE
+    target_include_directories(mdraft PRIVATE
       ${MDRAFT_INCLUDE_DIRS}
       ${CMAKE_CURRENT_SOURCE_DIR}/gui_x11/include
       ${X11_INCLUDE_DIR}
     )
-    target_link_libraries(mdraft-x11 PRIVATE
+    target_link_libraries(mdraft PRIVATE
       mdraft_core
       mdraft_io
       mdraft_ui_model
       mdraft_runtime
       ${X11_LIBRARIES}
     )
-    target_compile_definitions(mdraft-x11 PRIVATE MDRAFT_VERSION="${PROJECT_VERSION}")
+    target_compile_definitions(mdraft PRIVATE MDRAFT_VERSION="${PROJECT_VERSION}")
+    install(TARGETS mdraft RUNTIME DESTINATION bin)
   endif()
 endif()
 
@@ -215,4 +219,10 @@ if(MDRAFT_BUILD_TESTS)
   )
   target_link_libraries(test_workspace PRIVATE mdraft_workspace)
   add_test(NAME workspace COMMAND test_workspace)
+endif()
+
+# Android and other platforms need a native C++ window/input backend.
+# Do not silently package mdraft-cli as if it were the graphical editor.
+if(ANDROID)
+  message(FATAL_ERROR "MDraft GUI: Android C++ window backend is not present. The KR compiler must supply a GUI backend; a CLI library is not a GUI application.")
 endif()
