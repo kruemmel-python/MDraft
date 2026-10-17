@@ -225,3 +225,12 @@ endif()
 # Portable C++ core target for KR and non-desktop platforms.
 # This exports the editor engine as a native library; a graphical frontend
 # must be provided by the consuming platform. Desktop GUI targets stay unchanged.
+
+# KR can compile this native C++ target for Android ARM64 without a Java layer.
+# It is an engine library, not an Android graphical window.
+if(ANDROID)
+  add_library(mdraft SHARED app/src/portable_bridge.cpp)
+  target_include_directories(mdraft PRIVATE ${MDRAFT_INCLUDE_DIRS})
+  target_link_libraries(mdraft PRIVATE mdraft_core mdraft_io mdraft_ui_model mdraft_runtime mdraft_workspace)
+  target_compile_definitions(mdraft PRIVATE MDRAFT_VERSION="${PROJECT_VERSION}")
+endif()
