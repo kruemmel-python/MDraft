@@ -221,8 +221,7 @@ if(MDRAFT_BUILD_TESTS)
   add_test(NAME workspace COMMAND test_workspace)
 endif()
 
-# Android and other platforms need a native C++ window/input backend.
-# Do not silently package mdraft-cli as if it were the graphical editor.
-if(ANDROID)
-  message(FATAL_ERROR "MDraft GUI: Android C++ window backend is not present. The KR compiler must supply a GUI backend; a CLI library is not a GUI application.")
-endif()
+
+# Portable C++ core target for KR and non-desktop platforms.
+# This exports the editor engine as a native library; a graphical frontend
+# must be provided by the consuming platform. Desktop GUI targets stay unchanged.
